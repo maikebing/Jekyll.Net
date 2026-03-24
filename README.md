@@ -27,6 +27,8 @@
 - `_config.yml defaults` 基础支持
 - Sass/SCSS 编译
 - 静态资源复制到 `_site`
+- AI 驱动的多语言内容翻译基础管线
+- OpenAI / DeepSeek / Ollama 的 OpenAI-compatible 翻译接入
 
 ## 快速开始
 
@@ -47,6 +49,38 @@
 运行完整测试与 snapshot 回归：
 
 `dotnet test .\JekyllNet.slnx`
+
+## AI 翻译配置
+
+在 `_config.yml` 中配置 `ai.translate.targets` 后，构建时会为 Markdown 内容自动生成目标语言页面。
+
+```yml
+lang: zh-CN
+ai:
+  provider: openai
+  model: gpt-5-mini
+  api_key_env: OPENAI_API_KEY
+  translate:
+    targets:
+      - en
+      - fr
+    front_matter_keys:
+      - title
+      - description
+```
+
+支持的 provider：
+
+- `openai`
+- `deepseek`
+- `ollama`
+
+默认行为：
+
+- 只自动翻译 Markdown 内容文件
+- 自动翻译 `title`，可通过 `ai.translate.front_matter_keys` 扩展
+- 输出 URL 会自动按目标语言前缀生成，例如 `/fr/.../`
+- 页脚法务标签会按页面语言切换；对非中英文目标语言，会优先尝试用 AI 自动翻译标签
 
 ## 当前限制
 

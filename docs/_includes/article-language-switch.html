@@ -1,20 +1,25 @@
-{% if page.translation_url %}
-  {% if page.is_en %}
-    {% assign switch_caption = 'Language' %}
-    {% assign switch_small = 'Also available in' %}
-    {% assign switch_label = '中文' %}
-  {% else %}
-    {% assign switch_caption = '语言' %}
-    {% assign switch_small = '同时提供' %}
-    {% assign switch_label = 'English' %}
-  {% endif %}
+{% if page.translation_links %}
   <div class="article-tools">
     <div class="article-language-switch">
-      <span>{{ switch_caption }}</span>
-      <a href="{{ page.translation_url | prepend: site.baseurl }}">
-        <small>{{ switch_small }}</small>
-        <strong>{{ switch_label }}</strong>
-      </a>
+      <span>{{ page.ui_translation_caption }}</span>
+      {% for translation in page.translation_links %}
+        <a href="{{ translation.url | prepend: site.baseurl }}">
+          <small>{{ page.ui_translation_small }}</small>
+          <strong>{{ translation.label }}</strong>
+        </a>
+      {% endfor %}
     </div>
   </div>
+{% else %}
+  {% if page.translation_url %}
+    <div class="article-tools">
+      <div class="article-language-switch">
+        <span>{{ page.ui_translation_caption }}</span>
+        <a href="{{ page.translation_url | prepend: site.baseurl }}">
+          <small>{{ page.ui_translation_small }}</small>
+          <strong>{{ page.ui_translation_target_label }}</strong>
+        </a>
+      </div>
+    </div>
+  {% endif %}
 {% endif %}

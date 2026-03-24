@@ -1,48 +1,23 @@
-{% if page.is_en %}
-  {% assign docs_url = '/en/navigation/' %}
-  {% assign news_url = '/en/news/' %}
-  {% assign blog_url = '/en/blog/' %}
-  {% assign getting_started_url = '/en/getting-started/' %}
-  {% assign github_pages_url = '/en/github-pages/' %}
-  {% assign footer_intro = 'A GitHub Pages source site for Jekyll.Net, focused on project overview, quick start, compatibility scope, and docs navigation.' %}
-  {% assign docs_title = 'Docs' %}
-  {% assign project_title = 'Project' %}
-  {% assign docs_label_1 = 'Documentation map' %}
-  {% assign docs_label_2 = 'Getting started' %}
-  {% assign docs_label_3 = 'GitHub Pages setup' %}
-{% else %}
-  {% assign docs_url = '/zh/navigation/' %}
-  {% assign news_url = '/zh/news/' %}
-  {% assign blog_url = '/zh/blog/' %}
-  {% assign getting_started_url = '/zh/getting-started/' %}
-  {% assign github_pages_url = '/zh/github-pages/' %}
-  {% assign footer_intro = '这是 Jekyll.Net 的 GitHub Pages 源站，聚焦项目概览、快速开始、兼容范围与文档导航。' %}
-  {% assign docs_title = '文档' %}
-  {% assign project_title = '项目' %}
-  {% assign docs_label_1 = '文档导航' %}
-  {% assign docs_label_2 = '快速开始' %}
-  {% assign docs_label_3 = 'GitHub Pages 配置' %}
-{% endif %}
 <footer class="site-footer">
   <div class="container footer-grid">
     <section>
       <h2>Jekyll.Net</h2>
-      <p>{{ footer_intro }}</p>
+      <p>{{ page.ui_footer_intro }}</p>
     </section>
 
     <section>
-      <h2>{{ docs_title }}</h2>
+      <h2>{{ page.ui_footer_docs_title }}</h2>
       <ul>
-        <li><a href="{{ docs_url | prepend: site.baseurl }}">{{ docs_label_1 }}</a></li>
-        <li><a href="{{ getting_started_url | prepend: site.baseurl }}">{{ docs_label_2 }}</a></li>
-        <li><a href="{{ github_pages_url | prepend: site.baseurl }}">{{ docs_label_3 }}</a></li>
-        <li><a href="{{ news_url | prepend: site.baseurl }}">News</a></li>
-        <li><a href="{{ blog_url | prepend: site.baseurl }}">Blog</a></li>
+        <li><a href="{{ page.ui_docs_url | prepend: site.baseurl }}">{{ page.ui_footer_doc_map_label }}</a></li>
+        <li><a href="{{ page.ui_getting_started_url | prepend: site.baseurl }}">{{ page.ui_footer_getting_started_label }}</a></li>
+        <li><a href="{{ page.ui_github_pages_url | prepend: site.baseurl }}">{{ page.ui_footer_github_pages_label }}</a></li>
+        <li><a href="{{ page.ui_news_url | prepend: site.baseurl }}">{{ page.ui_footer_news_label }}</a></li>
+        <li><a href="{{ page.ui_blog_url | prepend: site.baseurl }}">{{ page.ui_footer_blog_label }}</a></li>
       </ul>
     </section>
 
     <section>
-      <h2>{{ project_title }}</h2>
+      <h2>{{ page.ui_footer_project_title }}</h2>
       <ul>
         <li><a href="https://github.com/IoTSharp/Jekyll.Net">GitHub</a></li>
         <li><a href="https://github.com/IoTSharp/Jekyll.Net/blob/main/README.md">README</a></li>

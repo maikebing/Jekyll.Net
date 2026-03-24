@@ -1,3 +1,5 @@
+using JekyllNet.Core.Translation;
+
 namespace JekyllNet.Tests;
 
 public sealed class SiteBuilderBehaviorTests
@@ -164,6 +166,337 @@ public sealed class SiteBuilderBehaviorTests
     }
 
     [Fact]
+    public async Task Build_PaginatesOnlyHtmlIndexPages_AndSkipsHiddenPosts()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["_config.yml"] = """
+                paginate: 2
+                paginate_path: /blog/page:num/
+                """,
+            ["_layouts/default.html"] = """
+                <html>
+                <body>
+                {{ content }}
+                </body>
+                </html>
+                """,
+            ["blog/index.html"] = """
+                ---
+                layout: default
+                permalink: /blog/
+                ---
+                page={{ paginator.page }}/{{ paginator.total_pages }}
+                {% for post in paginator.posts %}
+                {{ post.title }}
+                {% endfor %}
+                """,
+            ["notes/index.md"] = """
+                ---
+                layout: default
+                permalink: /notes/
+                ---
+                page={{ paginator.page | default: "none" }}
+                """,
+            ["_posts/2000-01-01-first.md"] = """
+                ---
+                layout: default
+                title: First
+                ---
+                First
+                """,
+            ["_posts/2000-01-02-second.md"] = """
+                ---
+                layout: default
+                title: Second
+                ---
+                Second
+                """,
+            ["_posts/2000-01-03-third.md"] = """
+                ---
+                layout: default
+                title: Third
+                ---
+                Third
+                """,
+            ["_posts/2000-01-04-hidden.md"] = """
+                ---
+                layout: default
+                title: Hidden
+                hidden: true
+                ---
+                Hidden
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(sourceDirectory);
+        var blogPage1 = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "blog", "index.html"));
+        var blogPage2 = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "blog", "page2", "index.html"));
+        var notesPage = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "notes", "index.html"));
+
+        Assert.Contains("page=1/2", blogPage1, StringComparison.Ordinal);
+        Assert.Contains("Third", blogPage1, StringComparison.Ordinal);
+        Assert.Contains("Second", blogPage1, StringComparison.Ordinal);
+        Assert.DoesNotContain("Hidden", blogPage1, StringComparison.Ordinal);
+
+        Assert.Contains("page=2/2", blogPage2, StringComparison.Ordinal);
+        Assert.Contains("First", blogPage2, StringComparison.Ordinal);
+        Assert.DoesNotContain("Hidden", blogPage2, StringComparison.Ordinal);
+
+        Assert.Contains("<html>", notesPage, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(outputDirectory, "notes", "page2", "index.html")));
+    }
+
+    [Fact]
+    public async Task Build_InsertsConfiguredFooterMetadataAndPolicyLinks()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["_config.yml"] = """
+                baseurl: /portal
+                备案号: 京ICP备11021163号-6
+                公安备案号: 京公网安备 11010502033607号
+                footer:
+                  copyright: "© 2011-2024 Umeng.com , All Rights Reserved"
+                  telecom_license: 京ICP证120439号
+                  terms_url: /terms/
+                  privacy_url: /privacy/
+                  report_phone: 4009901848
+                  report_email: Umeng_Legal@service.umeng.com
+                """,
+            ["_layouts/default.html"] = """
+                <html>
+                <body>
+                <main>{{ content }}</main>
+                </body>
+                </html>
+                """,
+            ["index.md"] = """
+                ---
+                layout: default
+                ---
+                Home
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(sourceDirectory);
+        var output = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "index.html"));
+
+        Assert.Contains("data-jekyllnet-auto-footer=\"true\"", output, StringComparison.Ordinal);
+        Assert.Contains("Umeng.com , All Rights Reserved", output, StringComparison.Ordinal);
+        Assert.Contains("href=\"https://beian.miit.gov.cn/\"", output, StringComparison.Ordinal);
+        Assert.Contains("京ICP备11021163号-6", output, StringComparison.Ordinal);
+        Assert.Contains("href=\"https://beian.mps.gov.cn/#/query/webSearch?code=11010502033607\"", output, StringComparison.Ordinal);
+        Assert.Contains("京公网安备 11010502033607号", output, StringComparison.Ordinal);
+        Assert.Contains("增值电信业务经营许可证：京ICP证120439号", output, StringComparison.Ordinal);
+        Assert.Contains("href=\"/portal/terms/\"", output, StringComparison.Ordinal);
+        Assert.Contains(">服务条款<", output, StringComparison.Ordinal);
+        Assert.Contains("href=\"/portal/privacy/\"", output, StringComparison.Ordinal);
+        Assert.Contains(">隐私政策<", output, StringComparison.Ordinal);
+        Assert.Contains("违法和不良举报电话：4009901848", output, StringComparison.Ordinal);
+        Assert.Contains("mailto:Umeng_Legal@service.umeng.com", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Build_LocalizesFooterLabelsPerPageLanguage()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["_config.yml"] = """
+                备案号: 京ICP备11021163号-6
+                公安备案号: 京公网安备 11010502033607号
+                footer:
+                  telecom_license: 京ICP证120439号
+                  terms_url: /terms/
+                  privacy_url: /privacy/
+                  report_phone: 4009901848
+                  report_email: legal@example.com
+                """,
+            ["_layouts/default.html"] = """
+                <html>
+                <body>
+                {{ content }}
+                </body>
+                </html>
+                """,
+            ["en/index.html"] = """
+                ---
+                layout: default
+                lang: en
+                ---
+                Home
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(sourceDirectory);
+        var output = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "en", "index.html"));
+
+        Assert.Contains("ICP Filing No.: 京ICP备11021163号-6", output, StringComparison.Ordinal);
+        Assert.Contains("Public Security Filing No.: 京公网安备 11010502033607号", output, StringComparison.Ordinal);
+        Assert.Contains("Value-added Telecom License: 京ICP证120439号", output, StringComparison.Ordinal);
+        Assert.Contains(">Terms of Service<", output, StringComparison.Ordinal);
+        Assert.Contains(">Privacy Policy<", output, StringComparison.Ordinal);
+        Assert.Contains("Report Phone: 4009901848", output, StringComparison.Ordinal);
+        Assert.Contains("Report Email:", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("服务条款", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("隐私政策", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("举报邮箱", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Build_InsertsConfiguredAnalyticsSnippets()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["_config.yml"] = """
+                analytics:
+                  google: G-TEST12345
+                  baidu: baidu-hm-id
+                  cnzz: 30086500
+                  "51la": LA-TRACK-001
+                """,
+            ["_layouts/default.html"] = """
+                <html>
+                <body>
+                {{ content }}
+                </body>
+                </html>
+                """,
+            ["index.md"] = """
+                ---
+                layout: default
+                ---
+                Home
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(sourceDirectory);
+        var output = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "index.html"));
+
+        Assert.Contains("https://www.googletagmanager.com/gtag/js?id=G-TEST12345", output, StringComparison.Ordinal);
+        Assert.Contains("gtag('config', 'G-TEST12345');", output, StringComparison.Ordinal);
+        Assert.Contains("https://hm.baidu.com/hm.js?baidu-hm-id", output, StringComparison.Ordinal);
+        Assert.Contains("_czc.push([\"_setAccount\", \"30086500\"]);", output, StringComparison.Ordinal);
+        Assert.Contains("https://w.cnzz.com/c.php?id=30086500&async=1", output, StringComparison.Ordinal);
+        Assert.Contains("https://sdk.51.la/js-sdk-pro.min.js", output, StringComparison.Ordinal);
+        Assert.Contains("LA.init({ id: \"LA-TRACK-001\", ck: \"LA-TRACK-001\" });", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Build_AutoTranslatesMarkdownContent_WhenAiConfigured()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["_config.yml"] = """
+                lang: zh-CN
+                备案号: 京ICP备11021163号-6
+                footer:
+                  terms_url: /terms/
+                  privacy_url: /privacy/
+                  report_phone: 4009901848
+                  report_email: legal@example.com
+                ai:
+                  provider: openai
+                  model: gpt-5-mini
+                  translate:
+                    targets:
+                      - fr
+                    front_matter_keys:
+                      - title
+                """,
+            ["_layouts/default.html"] = """
+                <html>
+                <body>
+                <h1>{{ page.title }}</h1>
+                {{ content }}
+                </body>
+                </html>
+                """,
+            ["index.md"] = """
+                ---
+                layout: default
+                title: 欢迎
+                lang: zh-CN
+                ---
+                你好，世界。
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(
+            sourceDirectory,
+            aiTranslationClient: new FakeAiTranslationClient());
+        var translatedOutput = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "fr", "index.html"));
+
+        Assert.Contains("<h1>fr::欢迎</h1>", translatedOutput, StringComparison.Ordinal);
+        Assert.Contains("fr::你好，世界。", translatedOutput, StringComparison.Ordinal);
+        Assert.Contains("fr::Terms of Service", translatedOutput, StringComparison.Ordinal);
+        Assert.Contains("fr::Privacy Policy", translatedOutput, StringComparison.Ordinal);
+        Assert.Contains("fr::Report Email", translatedOutput, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Build_AppliesLocaleSpecificThemeDefaults_BeyondZhAndEn()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["_config.yml"] = """
+                locales:
+                  - code: fr
+                    root: /fr/
+                    label: FR
+                  - code: en
+                    root: /en/
+                    label: EN
+                defaults:
+                  - scope:
+                      path: ""
+                    values:
+                      layout: default
+                      ui_home_url: /en/
+                      ui_docs_url: /en/docs/
+                      ui_switch_label: Language
+                      ui_docs_label: Docs
+                  - scope:
+                      path: fr
+                    values:
+                      ui_home_url: /fr/
+                      ui_docs_url: /fr/docs/
+                      ui_switch_label: Langue
+                      ui_docs_label: Documentation
+                """,
+            ["_layouts/default.html"] = """
+                <html>
+                <body>
+                {% assign current_locale = page.locale_code | default: page.lang | split: "-" | first %}
+                <nav aria-label="{{ page.ui_switch_label }}">
+                {% for locale in site.locales %}
+                <a href="{{ locale.root }}" class="{% if current_locale == locale.code %}is-active{% endif %}">{{ locale.label }}</a>
+                {% endfor %}
+                </nav>
+                <a href="{{ page.ui_docs_url }}">{{ page.ui_docs_label }}</a>
+                {{ content }}
+                </body>
+                </html>
+                """,
+            ["fr/index.md"] = """
+                ---
+                layout: default
+                lang: fr-FR
+                ---
+                Bonjour
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(sourceDirectory);
+        var output = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "fr", "index.html"));
+
+        Assert.Contains("aria-label=\"Langue\"", output, StringComparison.Ordinal);
+        Assert.Contains("href=\"/fr/docs/\">Documentation</a>", output, StringComparison.Ordinal);
+        Assert.Contains("href=\"/fr/\" class=\"is-active\">FR</a>", output, StringComparison.Ordinal);
+        Assert.Contains("href=\"/en/\" class=\"\">EN</a>", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Build_RespectsConfigExcludeAndInclude()
     {
         var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
@@ -313,5 +646,18 @@ public sealed class SiteBuilderBehaviorTests
                 Draft
                 """
         });
+    }
+
+    private sealed class FakeAiTranslationClient : IAiTranslationClient
+    {
+        public Task<string> TranslateAsync(
+            string sourceLanguage,
+            string targetLanguage,
+            string text,
+            AiTextKind textKind,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult($"{targetLanguage}::{text}");
+        }
     }
 }

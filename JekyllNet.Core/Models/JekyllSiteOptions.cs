@@ -1,4 +1,5 @@
 using JekyllNet.Core.Compatibility;
+using JekyllNet.Core.Translation;
 
 namespace JekyllNet.Core.Models;
 
@@ -17,4 +18,6 @@ public sealed class JekyllSiteOptions
     public bool IncludeUnpublished { get; init; }
 
     public int? PostsPerPage { get; init; }
+
+    public IAiTranslationClient? AiTranslationClient { get; init; }
 }

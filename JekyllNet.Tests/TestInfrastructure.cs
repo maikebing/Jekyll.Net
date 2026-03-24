@@ -2,6 +2,7 @@ using System.Text;
 using System.Runtime.CompilerServices;
 using JekyllNet.Core.Models;
 using JekyllNet.Core.Services;
+using JekyllNet.Core.Translation;
 
 namespace JekyllNet.Tests;
 
@@ -17,7 +18,8 @@ internal static class TestInfrastructure
         bool includeDrafts = false,
         bool includeFuture = false,
         bool includeUnpublished = false,
-        int? postsPerPage = null)
+        int? postsPerPage = null,
+        IAiTranslationClient? aiTranslationClient = null)
     {
         var destinationDirectory = Path.Combine(Path.GetTempPath(), "JekyllNet.Tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(destinationDirectory);
@@ -30,7 +32,8 @@ internal static class TestInfrastructure
             IncludeDrafts = includeDrafts,
             IncludeFuture = includeFuture,
             IncludeUnpublished = includeUnpublished,
-            PostsPerPage = postsPerPage
+            PostsPerPage = postsPerPage,
+            AiTranslationClient = aiTranslationClient
         });
 
         return destinationDirectory;
