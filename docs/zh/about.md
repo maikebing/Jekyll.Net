@@ -1,0 +1,30 @@
+---
+title: 关于本站
+description: 解释这套 Jekyll.Net 文档站的来源和改造方式。
+permalink: /zh/about/
+lang: zh-CN
+is_en: false
+nav_key: about
+translation_url: /en/about/
+---
+# 关于本站
+
+这套站点直接参考了 `LVGLSharp` 的 `docs` 外壳。
+
+## 保留了什么
+
+- 页面布局组织
+- 顶部导航和页脚结构
+- 主要 CSS 视觉风格
+- 首页和导航页的面板化信息展示方式
+
+## 没有照抄什么
+
+- 原仓库正文内容
+- 原仓库项目链接和品牌资源
+- 原仓库统计脚本
+- 原仓库针对自身主题设计的栏目结构
+
+## 现在这套站点适合做什么
+
+它适合拿来给 `Jekyll.Net` 做一个清晰、轻量、可直接挂 GitHub Pages 的项目文档站，也方便后续继续往里面补更多兼容性和示例说明。

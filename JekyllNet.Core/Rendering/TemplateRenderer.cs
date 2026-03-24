@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.RegularExpressions;
 using JekyllNet.Core.Models;
 
 namespace JekyllNet.Core.Rendering;
@@ -13,114 +12,263 @@ public sealed partial class TemplateRenderer
             return string.Empty;
         }
 
-        var rendered = template;
-        rendered = ProcessIncludes(rendered, variables, includes);
-        rendered = ProcessForLoops(rendered, variables, includes);
-        rendered = ProcessIfBlocks(rendered, variables, includes);
-        rendered = ProcessAssignBlocks(rendered, variables, includes);
-        rendered = ReplaceVariables(rendered, variables);
-
-        return rendered;
+        var scope = new Dictionary<string, object?>(variables, StringComparer.OrdinalIgnoreCase);
+        return RenderSegment(template, scope, includes);
     }
 
-    private string ProcessIncludes(string template, IReadOnlyDictionary<string, object?> variables, IReadOnlyDictionary<string, string>? includes)
+    private string RenderSegment(string template, Dictionary<string, object?> scope, IReadOnlyDictionary<string, string>? includes)
+    {
+        var output = new System.Text.StringBuilder();
+        var index = 0;
+
+        while (index < template.Length)
+        {
+            var variableStart = template.IndexOf("{{", index, StringComparison.Ordinal);
+            var tagStart = template.IndexOf("{%", index, StringComparison.Ordinal);
+            var nextStart = NextTokenStart(variableStart, tagStart);
+
+            if (nextStart < 0)
+            {
+                output.Append(template[index..]);
+                break;
+            }
+
+            output.Append(template[index..nextStart]);
+
+            if (nextStart == variableStart)
+            {
+                var variableEnd = template.IndexOf("}}", variableStart + 2, StringComparison.Ordinal);
+                if (variableEnd < 0)
+                {
+                    output.Append(template[variableStart..]);
+                    break;
+                }
+
+                var expression = template[(variableStart + 2)..variableEnd].Trim();
+                output.Append(ResolveExpression(expression, scope)?.ToString() ?? string.Empty);
+                index = variableEnd + 2;
+                continue;
+            }
+
+            var tagEnd = template.IndexOf("%}", tagStart + 2, StringComparison.Ordinal);
+            if (tagEnd < 0)
+            {
+                output.Append(template[tagStart..]);
+                break;
+            }
+
+            var tagContent = template[(tagStart + 2)..tagEnd].Trim();
+            var tagName = GetTagName(tagContent);
+            index = tagEnd + 2;
+
+            switch (tagName)
+            {
+                case "assign":
+                    ExecuteAssign(tagContent, scope);
+                    break;
+
+                case "include":
+                    output.Append(RenderInclude(tagContent, scope, includes));
+                    break;
+
+                case "if":
+                    output.Append(RenderIfBlock(template, tagContent, scope, includes, ref index));
+                    break;
+
+                case "for":
+                    output.Append(RenderForBlock(template, tagContent, scope, includes, ref index));
+                    break;
+            }
+        }
+
+        return output.ToString();
+    }
+
+    private string RenderInclude(string tagContent, Dictionary<string, object?> scope, IReadOnlyDictionary<string, string>? includes)
     {
         if (includes is null || includes.Count == 0)
         {
-            return template;
+            return string.Empty;
         }
 
-        return IncludePattern().Replace(template, match =>
+        var includeExpression = tagContent["include".Length..].Trim();
+        if (string.IsNullOrWhiteSpace(includeExpression))
         {
-            var includeName = match.Groups[1].Value.Trim().Trim('"', '\'');
-            if (!includes.TryGetValue(includeName, out var includeTemplate))
-            {
-                return string.Empty;
-            }
+            return string.Empty;
+        }
 
-            var includeVariables = new Dictionary<string, object?>(variables, StringComparer.OrdinalIgnoreCase);
-            var includeArgs = ParseNamedArguments(match.Groups[2].Value, variables);
-            includeVariables["include"] = includeArgs;
-            return Render(includeTemplate, includeVariables, includes);
-        });
+        var parts = includeExpression.Split(' ', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var includeName = parts[0].Trim('"', '\'');
+        if (!includes.TryGetValue(includeName, out var includeTemplate))
+        {
+            return string.Empty;
+        }
+
+        var includeScope = new Dictionary<string, object?>(scope, StringComparer.OrdinalIgnoreCase)
+        {
+            ["include"] = parts.Length > 1
+                ? ParseNamedArguments(parts[1], scope)
+                : new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        };
+
+        return RenderSegment(includeTemplate, includeScope, includes);
     }
 
-    private string ProcessForLoops(string template, IReadOnlyDictionary<string, object?> variables, IReadOnlyDictionary<string, string>? includes)
+    private string RenderIfBlock(
+        string template,
+        string tagContent,
+        Dictionary<string, object?> scope,
+        IReadOnlyDictionary<string, string>? includes,
+        ref int index)
     {
-        return ForPattern().Replace(template, match =>
+        var condition = tagContent["if".Length..].Trim();
+        var bodyStart = index;
+        index = ExtractIfBranches(template, bodyStart, out var trueBranch, out var falseBranch);
+
+        return EvaluateCondition(condition, scope)
+            ? RenderSegment(trueBranch, scope, includes)
+            : RenderSegment(falseBranch, scope, includes);
+    }
+
+    private string RenderForBlock(
+        string template,
+        string tagContent,
+        Dictionary<string, object?> scope,
+        IReadOnlyDictionary<string, string>? includes,
+        ref int index)
+    {
+        var expression = tagContent["for".Length..].Trim();
+        var tokens = expression.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length < 3 || !string.Equals(tokens[1], "in", StringComparison.OrdinalIgnoreCase))
         {
-            var itemName = match.Groups[1].Value.Trim();
-            var collectionPath = match.Groups[2].Value.Trim();
-            var body = match.Groups[3].Value;
+            index = ExtractForBody(template, index, out _);
+            return string.Empty;
+        }
 
-            if (!TryResolveObject(variables, collectionPath, out var resolved))
-            {
-                return string.Empty;
-            }
+        var itemName = tokens[0];
+        var collectionPath = string.Join(' ', tokens.Skip(2));
+        index = ExtractForBody(template, index, out var body);
 
-            var sequence = resolved switch
+        if (!TryResolveObject(scope, collectionPath, out var resolved))
+        {
+            return string.Empty;
+        }
+
+        var sequence = resolved switch
+        {
+            IEnumerable<JekyllContentItem> typedEnumerable => typedEnumerable.Cast<object?>(),
+            IEnumerable<object?> enumerable => enumerable,
+            _ => Array.Empty<object?>()
+        };
+
+        var output = new System.Text.StringBuilder();
+        foreach (var item in sequence)
+        {
+            var iterationScope = new Dictionary<string, object?>(scope, StringComparer.OrdinalIgnoreCase)
             {
-                IEnumerable<JekyllContentItem> typedEnumerable => typedEnumerable.Cast<object?>(),
-                IEnumerable<object?> enumerable => enumerable,
-                _ => Array.Empty<object?>()
+                [itemName] = item switch
+                {
+                    JekyllContentItem contentItem => ToLiquidObject(contentItem),
+                    _ => item
+                }
             };
 
-            var parts = new List<string>();
-            foreach (var item in sequence)
-            {
-                var scope = new Dictionary<string, object?>(variables, StringComparer.OrdinalIgnoreCase)
-                {
-                    [itemName] = item switch
-                    {
-                        JekyllContentItem contentItem => ToLiquidObject(contentItem),
-                        _ => item
-                    }
-                };
+            output.Append(RenderSegment(body, iterationScope, includes));
+        }
 
-                parts.Add(Render(body, scope, includes));
+        return output.ToString();
+    }
+
+    private static int ExtractForBody(string template, int startIndex, out string body)
+    {
+        var depth = 0;
+        var cursor = startIndex;
+
+        while (TryFindTag(template, cursor, out var tagStart, out var tagEnd, out var tagContent))
+        {
+            var tagName = GetTagName(tagContent);
+            if (string.Equals(tagName, "for", StringComparison.OrdinalIgnoreCase))
+            {
+                depth++;
+            }
+            else if (string.Equals(tagName, "endfor", StringComparison.OrdinalIgnoreCase))
+            {
+                if (depth == 0)
+                {
+                    body = template[startIndex..tagStart];
+                    return tagEnd + 2;
+                }
+
+                depth--;
             }
 
-            return string.Join(string.Empty, parts);
-        });
+            cursor = tagEnd + 2;
+        }
+
+        body = template[startIndex..];
+        return template.Length;
     }
 
-    private string ProcessIfBlocks(string template, IReadOnlyDictionary<string, object?> variables, IReadOnlyDictionary<string, string>? includes)
+    private static int ExtractIfBranches(string template, int startIndex, out string trueBranch, out string falseBranch)
     {
-        return IfPattern().Replace(template, match =>
-        {
-            var condition = match.Groups[1].Value.Trim();
-            var trueContent = match.Groups[2].Value;
-            var falseContent = match.Groups[4].Success ? match.Groups[4].Value : string.Empty;
+        var depth = 0;
+        var cursor = startIndex;
+        var elseContentStart = -1;
+        var elseTagStart = -1;
 
-            return EvaluateCondition(condition, variables)
-                ? Render(trueContent, variables, includes)
-                : Render(falseContent, variables, includes);
-        });
+        while (TryFindTag(template, cursor, out var tagStart, out var tagEnd, out var tagContent))
+        {
+            var tagName = GetTagName(tagContent);
+            if (string.Equals(tagName, "if", StringComparison.OrdinalIgnoreCase))
+            {
+                depth++;
+            }
+            else if (string.Equals(tagName, "endif", StringComparison.OrdinalIgnoreCase))
+            {
+                if (depth == 0)
+                {
+                    trueBranch = elseTagStart >= 0
+                        ? template[startIndex..elseTagStart]
+                        : template[startIndex..tagStart];
+                    falseBranch = elseContentStart >= 0
+                        ? template[elseContentStart..tagStart]
+                        : string.Empty;
+                    return tagEnd + 2;
+                }
+
+                depth--;
+            }
+            else if (string.Equals(tagName, "else", StringComparison.OrdinalIgnoreCase) && depth == 0 && elseTagStart < 0)
+            {
+                elseTagStart = tagStart;
+                elseContentStart = tagEnd + 2;
+            }
+
+            cursor = tagEnd + 2;
+        }
+
+        trueBranch = template[startIndex..];
+        falseBranch = string.Empty;
+        return template.Length;
     }
 
-    private string ProcessAssignBlocks(string template, IReadOnlyDictionary<string, object?> variables, IReadOnlyDictionary<string, string>? includes)
+    private static void ExecuteAssign(string tagContent, Dictionary<string, object?> scope)
     {
-        var scoped = new Dictionary<string, object?>(variables, StringComparer.OrdinalIgnoreCase);
-
-        var withoutAssign = AssignPattern().Replace(template, match =>
+        var expression = tagContent["assign".Length..].Trim();
+        var separator = expression.IndexOf('=');
+        if (separator < 0)
         {
-            var key = match.Groups[1].Value.Trim();
-            var valueExpression = match.Groups[2].Value.Trim();
-            scoped[key] = ResolveExpression(valueExpression, scoped);
-            return string.Empty;
-        });
+            return;
+        }
 
-        return ReplaceVariables(withoutAssign, scoped);
-    }
-
-    private string ReplaceVariables(string template, IReadOnlyDictionary<string, object?> variables)
-    {
-        return VariablePattern().Replace(template, match =>
+        var key = expression[..separator].Trim();
+        var valueExpression = expression[(separator + 1)..].Trim();
+        if (string.IsNullOrWhiteSpace(key))
         {
-            var expression = match.Groups[1].Value.Trim();
-            var value = ResolveExpression(expression, variables);
-            return value?.ToString() ?? string.Empty;
-        });
+            return;
+        }
+
+        scope[key] = ResolveExpression(valueExpression, scope);
     }
 
     private static Dictionary<string, object?> ParseNamedArguments(string input, IReadOnlyDictionary<string, object?> variables)
@@ -132,7 +280,7 @@ public sealed partial class TemplateRenderer
         }
 
         var matches = NamedArgumentPattern().Matches(input);
-        foreach (Match match in matches)
+        foreach (System.Text.RegularExpressions.Match match in matches)
         {
             result[match.Groups[1].Value.Trim()] = ResolveExpression(match.Groups[2].Value.Trim(), variables);
         }
@@ -171,7 +319,7 @@ public sealed partial class TemplateRenderer
             return boolValue;
         }
 
-        return TryResolveObject(variables, expression, out var value) ? value : expression;
+        return TryResolveObject(variables, expression, out var value) ? value : null;
     }
 
     private static object? ApplyFilter(object? value, string filterName, string? argument)
@@ -324,6 +472,7 @@ public sealed partial class TemplateRenderer
         {
             null => false,
             bool b => b,
+            string s when bool.TryParse(s, out var boolString) => boolString,
             string s => !string.IsNullOrWhiteSpace(s),
             IEnumerable<object?> e => e.Any(),
             _ => true
@@ -367,21 +516,48 @@ public sealed partial class TemplateRenderer
             ["title"] = item.FrontMatter.TryGetValue("title", out var title) ? title : Path.GetFileNameWithoutExtension(item.RelativePath)
         };
 
-    [GeneratedRegex(@"\{\%\s*include\s+([^\s]+)(.*?)\%\}", RegexOptions.Compiled | RegexOptions.Singleline)]
-    private static partial Regex IncludePattern();
+    private static bool TryFindTag(string template, int startIndex, out int tagStart, out int tagEnd, out string tagContent)
+    {
+        tagStart = template.IndexOf("{%", startIndex, StringComparison.Ordinal);
+        if (tagStart < 0)
+        {
+            tagEnd = -1;
+            tagContent = string.Empty;
+            return false;
+        }
 
-    [GeneratedRegex(@"\{\%\s*for\s+(\w+)\s+in\s+(.+?)\s*\%\}(.*?)\{\%\s*endfor\s*\%\}", RegexOptions.Compiled | RegexOptions.Singleline)]
-    private static partial Regex ForPattern();
+        tagEnd = template.IndexOf("%}", tagStart + 2, StringComparison.Ordinal);
+        if (tagEnd < 0)
+        {
+            tagContent = string.Empty;
+            return false;
+        }
 
-    [GeneratedRegex(@"\{\%\s*if\s+(.+?)\s*\%\}(.*?)(\{\%\s*else\s*\%\}(.*?))?\{\%\s*endif\s*\%\}", RegexOptions.Compiled | RegexOptions.Singleline)]
-    private static partial Regex IfPattern();
+        tagContent = template[(tagStart + 2)..tagEnd].Trim();
+        return true;
+    }
 
-    [GeneratedRegex(@"\{\%\s*assign\s+(\w+)\s*=\s*(.+?)\s*\%\}", RegexOptions.Compiled)]
-    private static partial Regex AssignPattern();
+    private static string GetTagName(string tagContent)
+    {
+        var firstSpace = tagContent.IndexOf(' ');
+        return firstSpace >= 0 ? tagContent[..firstSpace] : tagContent;
+    }
 
-    [GeneratedRegex("(\\w+)\\s*=\\s*(\".*?\"|'.*?'|[^\\s]+)", RegexOptions.Compiled)]
-    private static partial Regex NamedArgumentPattern();
+    private static int NextTokenStart(int variableStart, int tagStart)
+    {
+        if (variableStart < 0)
+        {
+            return tagStart;
+        }
 
-    [GeneratedRegex(@"\{\{\s*(.*?)\s*\}\}", RegexOptions.Compiled)]
-    private static partial Regex VariablePattern();
+        if (tagStart < 0)
+        {
+            return variableStart;
+        }
+
+        return Math.Min(variableStart, tagStart);
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex("(\\w+)\\s*=\\s*(\".*?\"|'.*?'|[^\\s]+)", System.Text.RegularExpressions.RegexOptions.Compiled)]
+    private static partial System.Text.RegularExpressions.Regex NamedArgumentPattern();
 }

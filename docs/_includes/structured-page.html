@@ -1,0 +1,110 @@
+{% if page.hero %}
+  <section class="hero-shell">
+    <div class="hero-main panel">
+      <p class="eyebrow">{{ page.hero.eyebrow }}</p>
+      <h1>{{ page.hero.title }}</h1>
+      <div class="hero-copy">
+        <p>{{ page.hero.lead }}</p>
+      </div>
+
+      <div class="hero-actions">
+        <a class="button button-primary" href="{{ page.hero.primary_url | prepend: site.baseurl }}">{{ page.hero.primary_label }}</a>
+        <a class="button button-secondary" href="{{ page.hero.secondary_url }}">{{ page.hero.secondary_label }}</a>
+        <a class="button button-secondary" href="{{ page.hero.tertiary_url }}">{{ page.hero.tertiary_label }}</a>
+      </div>
+
+      <ul class="tag-row" aria-label="Highlights">
+        {% for tag in page.hero.tags %}
+          <li>{{ tag }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <aside class="hero-side">
+      <section class="panel code-panel">
+        <p class="panel-label">{{ page.hero.code_title }}</p>
+        <pre><code>{{ page.hero.code }}</code></pre>
+      </section>
+
+      <section class="panel note-panel">
+        <h2>{{ page.hero.note_title }}</h2>
+        <div class="note-copy">
+          <p>{{ page.hero.note_text }}</p>
+        </div>
+      </section>
+    </aside>
+  </section>
+{% else %}
+  <section class="page-intro panel">
+    <p class="eyebrow">{{ page.intro.eyebrow }}</p>
+    <h1>{{ page.intro.title }}</h1>
+    <div class="intro-copy">
+      <p>{{ page.intro.description }}</p>
+    </div>
+  </section>
+{% endif %}
+
+{% if page.stats %}
+  <section class="stats-grid">
+    {% for stat in page.stats %}
+      <div class="panel stat-card">
+        <span class="stat-label">{{ stat.label }}</span>
+        <strong class="stat-value">{{ stat.value }}</strong>
+      </div>
+    {% endfor %}
+  </section>
+{% endif %}
+
+{% for section in page.sections %}
+  <section class="content-section {{ section.section_class }}">
+    <header class="section-header">
+      <h2>{{ section.title }}</h2>
+      <div class="section-copy">
+        <p>{{ section.description }}</p>
+      </div>
+    </header>
+
+    {% if section.variant == 'cards' %}
+      <div class="card-grid section-columns-{{ section.columns }}">
+        {% for item in section.items %}
+          <article class="panel info-card">
+            <h3>{{ item.title }}</h3>
+            <div class="card-copy">
+              <p>{{ item.description }}</p>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if section.variant == 'quick-links' %}
+      <div class="card-grid section-columns-{{ section.columns }}">
+        {% for item in section.items %}
+          <a class="panel quick-card" href="{{ item.url }}">
+            <strong>{{ item.title }}</strong>
+            <div class="card-copy">
+              <p>{{ item.description }}</p>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if section.variant == 'list' %}
+      <ul class="stack-list">
+        {% for item in section.items %}
+          <li>
+            <a href="{{ item.url }}">{{ item.label }}</a>
+            <span>{{ item.description }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+{% endfor %}
+
+{% if content %}
+  <article class="doc-article structured-article">
+    {{ content }}
+  </article>
+{% endif %}

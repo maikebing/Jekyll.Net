@@ -1,0 +1,20 @@
+{% if page.translation_url %}
+  {% if page.is_en %}
+    {% assign switch_caption = 'Language' %}
+    {% assign switch_small = 'Also available in' %}
+    {% assign switch_label = '中文' %}
+  {% else %}
+    {% assign switch_caption = '语言' %}
+    {% assign switch_small = '同时提供' %}
+    {% assign switch_label = 'English' %}
+  {% endif %}
+  <div class="article-tools">
+    <div class="article-language-switch">
+      <span>{{ switch_caption }}</span>
+      <a href="{{ page.translation_url | prepend: site.baseurl }}">
+        <small>{{ switch_small }}</small>
+        <strong>{{ switch_label }}</strong>
+      </a>
+    </div>
+  </div>
+{% endif %}

@@ -1,0 +1,54 @@
+.vs/
+**/bin/
+**/obj/
+**/_site/
+**/TestResults/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / VS Code / Rider
+.vscode/
+.idea/
+*.DotSettings.user
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+*.nuspec
+!Directory.Build.props
+!Directory.Build.targets
+!.config/
+!.config/dotnet-tools.json
+
+# Logs and diagnostics
+*.log
+*.tlog
+*.tmp
+*.temp
+*.cache
+*.pidb
+*.svclog
+*.trx
+*.coverage
+*.coveragexml
+
+# Profiling and local DBs
+*.psess
+*.vsp
+*.vspx
+*.sap
+*.dbmdl
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+# Test and benchmark artifacts
+BenchmarkDotNet.Artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db

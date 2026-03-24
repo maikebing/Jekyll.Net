@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang }}">
+  {% include site-head.html %}
+  <body class="site-shell">
+    <div class="site-backdrop" aria-hidden="true"></div>
+    {% include site-header.html %}
+
+    <main class="site-main">
+      <div class="container">
+        <article class="doc-article">
+          {% include article-language-switch.html %}
+          {{ content }}
+        </article>
+      </div>
+    </main>
+
+    {% include site-footer.html %}
+  </body>
+</html>

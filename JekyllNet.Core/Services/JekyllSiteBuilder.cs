@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using DartSassHost;
 using Markdig;
 using JekyllNet.Core.Models;
@@ -101,7 +102,8 @@ public sealed class JekyllSiteBuilder
 
             var text = await File.ReadAllTextAsync(file, cancellationToken);
             var document = _frontMatterParser.Parse(text);
-            result.Add(CreateContentItem(file, relativePath, document.FrontMatter, document.Content, collectionDefinitions, options));
+            var frontMatter = ApplyFrontMatterDefaults(relativePath, document.FrontMatter, siteConfig, collectionDefinitions, options);
+            result.Add(CreateContentItem(file, relativePath, frontMatter, document.Content, collectionDefinitions, options));
         }
 
         return result;
@@ -306,7 +308,10 @@ public sealed class JekyllSiteBuilder
 
         var yaml = await File.ReadAllTextAsync(path, cancellationToken);
         var values = _yamlDeserializer.Deserialize<Dictionary<object, object?>>(yaml) ?? new Dictionary<object, object?>();
-        return values.ToDictionary(k => k.Key.ToString() ?? string.Empty, v => v.Value, StringComparer.OrdinalIgnoreCase);
+        return values.ToDictionary(
+            k => k.Key.ToString() ?? string.Empty,
+            v => NormalizeYamlValue(v.Value),
+            StringComparer.OrdinalIgnoreCase);
     }
 
     private async Task<Dictionary<string, string>> LoadNamedTemplatesAsync(string sourceDirectory, string directoryName, CancellationToken cancellationToken)
@@ -419,6 +424,50 @@ public sealed class JekyllSiteBuilder
         return result;
     }
 
+    private static Dictionary<string, object?> ApplyFrontMatterDefaults(
+        string relativePath,
+        Dictionary<string, object?> frontMatter,
+        Dictionary<string, object?> siteConfig,
+        HashSet<string> collections,
+        JekyllSiteOptions options)
+    {
+        var merged = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+        if (siteConfig.TryGetValue("defaults", out var defaultsValue) && defaultsValue is IEnumerable<object?> entries)
+        {
+            var contentType = ResolveDefaultScopeType(relativePath, collections, options);
+            foreach (var entry in entries.OfType<Dictionary<string, object?>>())
+            {
+                if (!entry.TryGetValue("scope", out var scopeValue) || scopeValue is not Dictionary<string, object?> scope)
+                {
+                    continue;
+                }
+
+                if (!entry.TryGetValue("values", out var valuesValue) || valuesValue is not Dictionary<string, object?> values)
+                {
+                    continue;
+                }
+
+                if (!ScopeMatches(relativePath, contentType, scope))
+                {
+                    continue;
+                }
+
+                foreach (var pair in values)
+                {
+                    merged[pair.Key] = pair.Value;
+                }
+            }
+        }
+
+        foreach (var pair in frontMatter)
+        {
+            merged[pair.Key] = pair.Value;
+        }
+
+        return merged;
+    }
+
     private static Dictionary<string, List<JekyllContentItem>> BuildTaxonomy(
         IEnumerable<JekyllContentItem> items,
         Func<JekyllContentItem, IEnumerable<string>> selector)
@@ -447,6 +496,49 @@ public sealed class JekyllSiteBuilder
         }
 
         return [value.ToString()!];
+    }
+
+    private static string ResolveDefaultScopeType(string relativePath, HashSet<string> collections, JekyllSiteOptions options)
+    {
+        if (relativePath.StartsWith(options.Compatibility.PostsDirectoryName + "/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "posts";
+        }
+
+        if (relativePath.StartsWith("_drafts/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "drafts";
+        }
+
+        var collection = ResolveCollectionName(relativePath, isPost: false, collections);
+        return string.IsNullOrWhiteSpace(collection) ? "pages" : collection;
+    }
+
+    private static bool ScopeMatches(string relativePath, string contentType, Dictionary<string, object?> scope)
+    {
+        var pathScope = scope.TryGetValue("path", out var pathValue) ? pathValue?.ToString() ?? string.Empty : string.Empty;
+        var typeScope = scope.TryGetValue("type", out var typeValue) ? typeValue?.ToString() ?? string.Empty : string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(typeScope) && !string.Equals(typeScope, contentType, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var normalizedPath = relativePath.Replace('\\', '/').TrimStart('/');
+        var normalizedScope = pathScope.Replace('\\', '/').Trim('/').Trim();
+        if (string.IsNullOrWhiteSpace(normalizedScope))
+        {
+            return true;
+        }
+
+        if (normalizedScope.Contains('*'))
+        {
+            var pattern = "^" + Regex.Escape(normalizedScope).Replace(@"\*", ".*") + "$";
+            return Regex.IsMatch(normalizedPath, pattern, RegexOptions.IgnoreCase);
+        }
+
+        return string.Equals(normalizedPath, normalizedScope, StringComparison.OrdinalIgnoreCase)
+            || normalizedPath.StartsWith(normalizedScope + "/", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveCollectionName(string relativePath, bool isPost, HashSet<string> collections)
@@ -617,6 +709,19 @@ public sealed class JekyllSiteBuilder
                 x => NormalizeDataValue(x.Value),
                 StringComparer.OrdinalIgnoreCase),
             IList<object?> list => list.Select(NormalizeDataValue).ToList(),
+            _ => value
+        };
+    }
+
+    private static object? NormalizeYamlValue(object? value)
+    {
+        return value switch
+        {
+            Dictionary<object, object?> dict => dict.ToDictionary(
+                x => x.Key.ToString() ?? string.Empty,
+                x => NormalizeYamlValue(x.Value),
+                StringComparer.OrdinalIgnoreCase),
+            IList<object?> list => list.Select(NormalizeYamlValue).ToList(),
             _ => value
         };
     }

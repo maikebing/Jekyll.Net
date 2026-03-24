@@ -1,0 +1,64 @@
+{% if page.is_en %}
+  {% assign home_url = '/en/' %}
+  {% assign docs_url = '/en/navigation/' %}
+  {% assign news_url = '/en/news/' %}
+  {% assign blog_url = '/en/blog/' %}
+  {% assign about_url = '/en/about/' %}
+  {% assign brand_subtitle = 'GitHub Pages docs for the project' %}
+  {% assign docs_label = 'Docs' %}
+  {% assign news_label = 'News' %}
+  {% assign blog_label = 'Blog' %}
+  {% assign about_label = 'About' %}
+  {% assign source_label = 'Source' %}
+  {% assign switch_label = 'Language' %}
+{% else %}
+  {% assign home_url = '/zh/' %}
+  {% assign docs_url = '/zh/navigation/' %}
+  {% assign news_url = '/zh/news/' %}
+  {% assign blog_url = '/zh/blog/' %}
+  {% assign about_url = '/zh/about/' %}
+  {% assign brand_subtitle = '项目的 GitHub Pages 文档站' %}
+  {% assign docs_label = '文档' %}
+  {% assign news_label = '动态' %}
+  {% assign blog_label = '博客' %}
+  {% assign about_label = '关于' %}
+  {% assign source_label = '源码' %}
+  {% assign switch_label = '语言' %}
+{% endif %}
+<header class="site-header">
+  <div class="container header-shell">
+    <div class="header-start">
+      <a class="brand" href="{{ home_url | prepend: site.baseurl }}">
+        <span class="brand-mark">
+          <img src="{{ '/assets/brand/jekyll-net.svg' | prepend: site.baseurl }}" alt="Jekyll.Net logo">
+        </span>
+        <span class="brand-copy">
+          <strong>Jekyll.Net</strong>
+          <small>{{ brand_subtitle }}</small>
+        </span>
+      </a>
+
+      <div class="lang-switch" aria-label="{{ switch_label }}">
+        <a href="{{ '/zh/' | prepend: site.baseurl }}" class="{% if page.is_en %}{% else %}is-active{% endif %}">中文</a>
+        <a href="{{ '/en/' | prepend: site.baseurl }}" class="{% if page.is_en %}is-active{% endif %}">EN</a>
+      </div>
+    </div>
+
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="{{ docs_url | prepend: site.baseurl }}" class="{% if page.nav_key == 'docs' %}is-active{% endif %}">{{ docs_label }}</a>
+      <a href="{{ news_url | prepend: site.baseurl }}" class="{% if page.nav_key == 'news' %}is-active{% endif %}">{{ news_label }}</a>
+      <a href="{{ blog_url | prepend: site.baseurl }}" class="{% if page.nav_key == 'blog' %}is-active{% endif %}">{{ blog_label }}</a>
+
+      <details class="nav-menu">
+        <summary>{{ source_label }}</summary>
+        <div class="nav-menu-panel">
+          <a href="https://github.com/IoTSharp/Jekyll.Net" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/IoTSharp/Jekyll.Net/blob/main/README.md" target="_blank" rel="noreferrer">README</a>
+          <a href="https://github.com/IoTSharp/Jekyll.Net/tree/main/sample-site" target="_blank" rel="noreferrer">sample-site</a>
+        </div>
+      </details>
+
+      <a href="{{ about_url | prepend: site.baseurl }}" class="{% if page.nav_key == 'about' %}is-active{% endif %}">{{ about_label }}</a>
+    </nav>
+  </div>
+</header>
