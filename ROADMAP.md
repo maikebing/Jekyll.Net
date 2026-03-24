@@ -132,10 +132,10 @@
 - [x] 接通 `drafts`
 - [x] 接通 `future`
 - [x] 接通 `unpublished`
-- [ ] 支持 excerpts / `excerpt_separator`
-- [ ] 补齐 static files 的 front matter 与 defaults
+- [x] 支持 excerpts / `excerpt_separator`
+- [x] 补齐 static files 的 front matter 与 defaults
 - [ ] 补齐更多 `_config.yml` 站点级选项到构建流程
-- [ ] 评估并接通 pagination
+- [x] 评估并接通 pagination
 
 完成标准：
 

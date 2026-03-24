@@ -240,4 +240,55 @@ public sealed class TemplateRendererTests
         Assert.Contains("\"name\":\"JekyllNet\"", output, StringComparison.Ordinal);
         Assert.Contains("\"count\":2", output, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Where_WithSinglePropertyArgument_FiltersTruthyItems()
+    {
+        const string template = """
+            {% assign visible_pages = site.pages | where: "published" %}
+            {% for page_item in visible_pages %}
+            {{ page_item.title }}
+            {% endfor %}
+            """;
+
+        var output = _renderer.Render(template, new Dictionary<string, object?>
+        {
+            ["site"] = new Dictionary<string, object?>
+            {
+                ["pages"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["title"] = "Public", ["published"] = true },
+                    new Dictionary<string, object?> { ["title"] = "Hidden", ["published"] = false },
+                    new Dictionary<string, object?> { ["title"] = "Unset" }
+                }
+            }
+        });
+
+        Assert.Equal("Public", output.Trim());
+    }
+
+    [Fact]
+    public void Map_SupportsNestedPropertyPaths()
+    {
+        const string template = """
+            {% assign names = site.pages | map: "author.name" %}
+            {% for name in names %}
+            {{ name }}
+            {% endfor %}
+            """;
+
+        var output = _renderer.Render(template, new Dictionary<string, object?>
+        {
+            ["site"] = new Dictionary<string, object?>
+            {
+                ["pages"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["author"] = new Dictionary<string, object?> { ["name"] = "Ava" } },
+                    new Dictionary<string, object?> { ["author"] = new Dictionary<string, object?> { ["name"] = "Bo" } }
+                }
+            }
+        });
+
+        Assert.Equal("Ava\nBo", string.Join('\n', output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)));
+    }
 }

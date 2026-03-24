@@ -18,5 +18,7 @@ public sealed class JekyllSiteContext
 
     public required Dictionary<string, List<JekyllContentItem>> Collections { get; init; }
 
+    public required List<JekyllStaticFile> StaticFiles { get; init; }
+
     public required GitHubPagesCompatibilityOptions Compatibility { get; init; }
 }

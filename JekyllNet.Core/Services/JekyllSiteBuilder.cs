@@ -39,7 +39,11 @@ public sealed class JekyllSiteBuilder
         var markdownPipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
 
         var items = await DiscoverContentItemsAsync(options.SourceDirectory, siteConfig, options, cancellationToken);
+        PrepareContentItems(items, markdownPipeline, siteConfig);
         var posts = items.Where(x => x.IsPost).OrderByDescending(x => x.Date).ToList();
+        var paginatedItems = CreatePaginationItems(items, posts, siteConfig, options);
+        items.AddRange(paginatedItems);
+        var staticFiles = await DiscoverStaticFilesAsync(options.SourceDirectory, siteConfig, items, options, cancellationToken);
         var collections = items
             .Where(x => !string.IsNullOrWhiteSpace(x.Collection))
             .GroupBy(x => x.Collection, StringComparer.OrdinalIgnoreCase)
@@ -51,11 +55,12 @@ public sealed class JekyllSiteBuilder
         {
             SourceDirectory = options.SourceDirectory,
             DestinationDirectory = options.DestinationDirectory,
-            SiteConfig = BuildSiteVariables(siteConfig, data, posts, collections, tags, categories, options),
+            SiteConfig = BuildSiteVariables(siteConfig, data, posts, collections, tags, categories, staticFiles, options),
             Layouts = layouts,
             Includes = includes,
             Posts = posts,
             Collections = collections,
+            StaticFiles = staticFiles,
             Compatibility = options.Compatibility
         };
 
@@ -63,14 +68,8 @@ public sealed class JekyllSiteBuilder
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var html = item.SourcePath.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
-                ? item.RawContent
-                : Markdown.ToHtml(item.RawContent, markdownPipeline);
-
-            item.RenderedContent = html;
-
-            var variables = BuildVariables(context, item, html);
-            var rendered = ApplyLayout(item, html, context.Layouts, context.Includes, variables);
+            var variables = BuildVariables(context, item, item.RenderedContent);
+            var rendered = ApplyLayout(item, item.RenderedContent, context.Layouts, context.Includes, variables);
 
             var destinationPath = Path.Combine(options.DestinationDirectory, item.OutputRelativePath.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
@@ -78,7 +77,7 @@ public sealed class JekyllSiteBuilder
         }
 
         await CompileSassAsync(options.SourceDirectory, options.DestinationDirectory, options, cancellationToken);
-        await CopyStaticFilesAsync(options.SourceDirectory, options.DestinationDirectory, items, options, cancellationToken);
+        await CopyStaticFilesAsync(options.DestinationDirectory, staticFiles, context, cancellationToken);
     }
 
     private async Task<List<JekyllContentItem>> DiscoverContentItemsAsync(
@@ -95,7 +94,7 @@ public sealed class JekyllSiteBuilder
             cancellationToken.ThrowIfCancellationRequested();
 
             var relativePath = Path.GetRelativePath(sourceDirectory, file).Replace('\\', '/');
-            if (ShouldSkip(relativePath, options) || !IsContentFile(file))
+            if (ShouldSkip(relativePath, siteConfig, options) || !IsContentFile(file))
             {
                 continue;
             }
@@ -103,7 +102,7 @@ public sealed class JekyllSiteBuilder
             var text = await File.ReadAllTextAsync(file, cancellationToken);
             var document = _frontMatterParser.Parse(text);
             var frontMatter = ApplyFrontMatterDefaults(relativePath, document.FrontMatter, siteConfig, collectionDefinitions, options);
-            var item = CreateContentItem(file, relativePath, frontMatter, document.Content, collectionDefinitions, options);
+            var item = CreateContentItem(file, relativePath, frontMatter, document.Content, collectionDefinitions, siteConfig, options);
             if (ShouldIncludeItem(item, options))
             {
                 result.Add(item);
@@ -119,13 +118,14 @@ public sealed class JekyllSiteBuilder
         Dictionary<string, object?> frontMatter,
         string rawContent,
         HashSet<string> collections,
+        IReadOnlyDictionary<string, object?> siteConfig,
         JekyllSiteOptions options)
     {
         var isDraft = relativePath.StartsWith("_drafts/", StringComparison.OrdinalIgnoreCase);
         var isPost = isDraft || relativePath.StartsWith(options.Compatibility.PostsDirectoryName + "/", StringComparison.OrdinalIgnoreCase);
         var collection = ResolveCollectionName(relativePath, isPost, collections);
         var date = ResolveDate(relativePath, frontMatter, isPost, isDraft);
-        var url = ResolvePermalink(relativePath, frontMatter, date, collection, isPost);
+        var url = ResolvePermalink(relativePath, frontMatter, date, collection, isPost, siteConfig);
         var tags = ReadStringList(frontMatter, "tags");
         var categories = ReadStringList(frontMatter, "categories");
 
@@ -151,6 +151,7 @@ public sealed class JekyllSiteBuilder
         var page = new Dictionary<string, object?>(item.FrontMatter, StringComparer.OrdinalIgnoreCase)
         {
             ["content"] = content,
+            ["excerpt"] = item.Excerpt,
             ["path"] = item.RelativePath,
             ["url"] = item.Url,
             ["date"] = item.Date,
@@ -159,11 +160,17 @@ public sealed class JekyllSiteBuilder
             ["categories"] = item.Categories.Cast<object?>().ToList()
         };
 
+        if (item.Paginator is not null)
+        {
+            page["paginator"] = item.Paginator;
+        }
+
         return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
             ["page"] = page,
             ["site"] = context.SiteConfig,
-            ["content"] = content
+            ["content"] = content,
+            ["paginator"] = item.Paginator
         };
     }
 
@@ -174,23 +181,25 @@ public sealed class JekyllSiteBuilder
         Dictionary<string, List<JekyllContentItem>> collections,
         Dictionary<string, List<JekyllContentItem>> tags,
         Dictionary<string, List<JekyllContentItem>> categories,
+        List<JekyllStaticFile> staticFiles,
         JekyllSiteOptions options)
     {
         return new Dictionary<string, object?>(siteConfig, StringComparer.OrdinalIgnoreCase)
         {
             ["data"] = data,
-            ["posts"] = posts.Select(ToLiquidObject).Cast<object?>().ToList(),
+            ["posts"] = posts.Select(item => ToLiquidObject(item, ShouldShowExcerpts(siteConfig))).Cast<object?>().ToList(),
+            ["static_files"] = staticFiles.Select(ToLiquidObject).Cast<object?>().ToList(),
             ["collections"] = collections.ToDictionary(
                 x => x.Key,
-                x => x.Value.Select(ToLiquidObject).Cast<object?>().ToList(),
+                x => x.Value.Select(item => ToLiquidObject(item, ShouldShowExcerpts(siteConfig))).Cast<object?>().ToList(),
                 StringComparer.OrdinalIgnoreCase),
             ["tags"] = tags.ToDictionary(
                 x => x.Key,
-                x => x.Value.Select(ToLiquidObject).Cast<object?>().ToList(),
+                x => x.Value.Select(item => ToLiquidObject(item, ShouldShowExcerpts(siteConfig))).Cast<object?>().ToList(),
                 StringComparer.OrdinalIgnoreCase),
             ["categories"] = categories.ToDictionary(
                 x => x.Key,
-                x => x.Value.Select(ToLiquidObject).Cast<object?>().ToList(),
+                x => x.Value.Select(item => ToLiquidObject(item, ShouldShowExcerpts(siteConfig))).Cast<object?>().ToList(),
                 StringComparer.OrdinalIgnoreCase),
             ["github_pages"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
             {
@@ -203,7 +212,11 @@ public sealed class JekyllSiteBuilder
     }
 
     private Dictionary<string, object?> ToLiquidObject(JekyllContentItem item)
-        => new(item.FrontMatter, StringComparer.OrdinalIgnoreCase)
+        => ToLiquidObject(item, includeExcerpt: true);
+
+    private Dictionary<string, object?> ToLiquidObject(JekyllContentItem item, bool includeExcerpt)
+    {
+        var result = new Dictionary<string, object?>(item.FrontMatter, StringComparer.OrdinalIgnoreCase)
         {
             ["title"] = item.FrontMatter.TryGetValue("title", out var title) ? title : Path.GetFileNameWithoutExtension(item.RelativePath),
             ["url"] = item.Url,
@@ -213,6 +226,24 @@ public sealed class JekyllSiteBuilder
             ["collection"] = item.Collection,
             ["tags"] = item.Tags.Cast<object?>().ToList(),
             ["categories"] = item.Categories.Cast<object?>().ToList()
+        };
+
+        if (includeExcerpt)
+        {
+            result["excerpt"] = item.Excerpt;
+        }
+
+        return result;
+    }
+
+    private Dictionary<string, object?> ToLiquidObject(JekyllStaticFile file)
+        => new(file.FrontMatter, StringComparer.OrdinalIgnoreCase)
+        {
+            ["path"] = file.RelativePath,
+            ["url"] = file.Url,
+            ["name"] = Path.GetFileName(file.RelativePath),
+            ["extname"] = Path.GetExtension(file.RelativePath),
+            ["basename"] = Path.GetFileNameWithoutExtension(file.RelativePath)
         };
 
     private string ApplyLayout(
@@ -272,36 +303,102 @@ public sealed class JekyllSiteBuilder
         return layoutContent;
     }
 
-    private async Task CopyStaticFilesAsync(
+    private void PrepareContentItems(IEnumerable<JekyllContentItem> items, MarkdownPipeline markdownPipeline, IReadOnlyDictionary<string, object?> siteConfig)
+    {
+        foreach (var item in items)
+        {
+            item.RenderedContent = item.SourcePath.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
+                ? item.RawContent
+                : Markdown.ToHtml(item.RawContent, markdownPipeline);
+            item.Excerpt = BuildExcerpt(item, markdownPipeline, siteConfig);
+        }
+    }
+
+    private async Task<List<JekyllStaticFile>> DiscoverStaticFilesAsync(
         string sourceDirectory,
-        string destinationDirectory,
+        Dictionary<string, object?> siteConfig,
         IReadOnlyCollection<JekyllContentItem> items,
         JekyllSiteOptions options,
         CancellationToken cancellationToken)
     {
+        var result = new List<JekyllStaticFile>();
         var renderedContentPaths = items.Select(x => x.RelativePath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var collectionDefinitions = ReadCollectionDefinitions(siteConfig, options);
 
         foreach (var file in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var relativePath = Path.GetRelativePath(sourceDirectory, file).Replace('\\', '/');
-            if (ShouldSkip(relativePath, options) || renderedContentPaths.Contains(relativePath))
+            if (ShouldSkip(relativePath, siteConfig, options) || renderedContentPaths.Contains(relativePath) || IsSassFile(file))
             {
                 continue;
             }
 
-            if (IsSassFile(file))
+            var hasFrontMatter = false;
+            var content = string.Empty;
+            var frontMatter = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+            if (IsTextStaticFile(file))
             {
-                continue;
+                var text = await File.ReadAllTextAsync(file, cancellationToken);
+                var document = _frontMatterParser.Parse(text);
+                hasFrontMatter = document.FrontMatter.Count > 0;
+                content = hasFrontMatter ? document.Content : text;
+                frontMatter = ApplyFrontMatterDefaults(relativePath, document.FrontMatter, siteConfig, collectionDefinitions, options);
+            }
+            else
+            {
+                frontMatter = ApplyFrontMatterDefaults(relativePath, new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase), siteConfig, collectionDefinitions, options);
             }
 
-            var destinationPath = Path.Combine(destinationDirectory, relativePath.Replace('/', Path.DirectorySeparatorChar));
-            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-            File.Copy(file, destinationPath, overwrite: true);
+            result.Add(new JekyllStaticFile
+            {
+                SourcePath = file,
+                RelativePath = relativePath,
+                OutputRelativePath = relativePath,
+                Url = "/" + relativePath.Replace('\\', '/'),
+                Content = content,
+                FrontMatter = frontMatter,
+                HasFrontMatter = hasFrontMatter
+            });
         }
 
-        await Task.CompletedTask;
+        return result;
+    }
+
+    private async Task CopyStaticFilesAsync(
+        string destinationDirectory,
+        IReadOnlyCollection<JekyllStaticFile> staticFiles,
+        JekyllSiteContext context,
+        CancellationToken cancellationToken)
+    {
+        foreach (var file in staticFiles)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var destinationPath = Path.Combine(destinationDirectory, file.OutputRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
+
+            if (file.HasFrontMatter && IsTextStaticFile(file.SourcePath))
+            {
+                var page = new Dictionary<string, object?>(file.FrontMatter, StringComparer.OrdinalIgnoreCase)
+                {
+                    ["path"] = file.RelativePath,
+                    ["url"] = file.Url
+                };
+                var variables = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["page"] = page,
+                    ["site"] = context.SiteConfig,
+                    ["content"] = file.Content
+                };
+                var rendered = _templateRenderer.Render(file.Content, variables, context.Includes);
+                await File.WriteAllTextAsync(destinationPath, rendered, cancellationToken);
+                continue;
+            }
+
+            File.Copy(file.SourcePath, destinationPath, overwrite: true);
+        }
     }
 
     private async Task<Dictionary<string, object?>> LoadConfigAsync(string sourceDirectory, CancellationToken cancellationToken)
@@ -377,13 +474,14 @@ public sealed class JekyllSiteBuilder
 
     private async Task CompileSassAsync(string sourceDirectory, string destinationDirectory, JekyllSiteOptions options, CancellationToken cancellationToken)
     {
+        var siteConfig = await LoadConfigAsync(sourceDirectory, cancellationToken);
         var sassFiles = Directory.EnumerateFiles(sourceDirectory, "*.*", SearchOption.AllDirectories)
             .Where(IsSassFile)
             .Where(file =>
             {
                 var relative = Path.GetRelativePath(sourceDirectory, file).Replace('\\', '/');
                 var fileName = Path.GetFileName(relative);
-                return !fileName.StartsWith("_", StringComparison.Ordinal) && !ShouldSkip(relative, options);
+                return !fileName.StartsWith("_", StringComparison.Ordinal) && !ShouldSkip(relative, siteConfig, options);
             })
             .ToList();
 
@@ -484,6 +582,95 @@ public sealed class JekyllSiteBuilder
             .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Date).ToList(), StringComparer.OrdinalIgnoreCase);
     }
 
+    private List<JekyllContentItem> CreatePaginationItems(
+        IReadOnlyCollection<JekyllContentItem> items,
+        IReadOnlyList<JekyllContentItem> posts,
+        IReadOnlyDictionary<string, object?> siteConfig,
+        JekyllSiteOptions options)
+    {
+        var result = new List<JekyllContentItem>();
+
+        foreach (var item in items.Where(CanPaginate))
+        {
+            var pageSize = ResolvePaginationPageSize(item, siteConfig, options);
+            if (pageSize is null || pageSize <= 0 || posts.Count == 0)
+            {
+                continue;
+            }
+
+            var totalPages = (int)Math.Ceiling(posts.Count / (double)pageSize.Value);
+            for (var pageNumber = 1; pageNumber <= totalPages; pageNumber++)
+            {
+                var pagePosts = posts
+                    .Skip((pageNumber - 1) * pageSize.Value)
+                    .Take(pageSize.Value)
+                    .Select(item => ToLiquidObject(item, ShouldShowExcerpts(siteConfig)))
+                    .Cast<object?>()
+                    .ToList();
+                var paginator = BuildPaginator(item, pagePosts, pageNumber, totalPages, pageSize.Value, posts.Count, siteConfig);
+
+                if (pageNumber == 1)
+                {
+                    item.Paginator = paginator;
+                    continue;
+                }
+
+                result.Add(new JekyllContentItem
+                {
+                    SourcePath = item.SourcePath,
+                    RelativePath = item.RelativePath,
+                    OutputRelativePath = UrlToOutputPath(paginator["page_path"]?.ToString() ?? item.Url),
+                    Url = paginator["page_path"]?.ToString() ?? item.Url,
+                    Collection = item.Collection,
+                    IsPost = item.IsPost,
+                    IsDraft = item.IsDraft,
+                    Date = item.Date,
+                    Tags = [.. item.Tags],
+                    Categories = [.. item.Categories],
+                    FrontMatter = new Dictionary<string, object?>(item.FrontMatter, StringComparer.OrdinalIgnoreCase),
+                    RawContent = item.RawContent,
+                    RenderedContent = item.RenderedContent,
+                    Excerpt = item.Excerpt,
+                    Paginator = paginator
+                });
+            }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, object?> BuildPaginator(
+        JekyllContentItem item,
+        List<object?> pagePosts,
+        int pageNumber,
+        int totalPages,
+        int pageSize,
+        int totalPosts,
+        IReadOnlyDictionary<string, object?> siteConfig)
+    {
+        var pagePath = pageNumber == 1 ? item.Url : ResolvePaginationUrl(item, pageNumber, siteConfig);
+        var previousPagePath = pageNumber > 1
+            ? (pageNumber == 2 ? item.Url : ResolvePaginationUrl(item, pageNumber - 1, siteConfig))
+            : null;
+        var nextPagePath = pageNumber < totalPages
+            ? ResolvePaginationUrl(item, pageNumber + 1, siteConfig)
+            : null;
+
+        return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["page"] = pageNumber,
+            ["per_page"] = pageSize,
+            ["posts"] = pagePosts,
+            ["total_posts"] = totalPosts,
+            ["total_pages"] = totalPages,
+            ["previous_page"] = pageNumber > 1 ? pageNumber - 1 : null,
+            ["previous_page_path"] = previousPagePath,
+            ["next_page"] = pageNumber < totalPages ? pageNumber + 1 : null,
+            ["next_page_path"] = nextPagePath,
+            ["page_path"] = pagePath
+        };
+    }
+
     private static List<string> ReadStringList(Dictionary<string, object?> frontMatter, string key)
     {
         if (!frontMatter.TryGetValue(key, out var value) || value is null)
@@ -502,6 +689,110 @@ public sealed class JekyllSiteBuilder
         }
 
         return [value.ToString()!];
+    }
+
+    private static bool CanPaginate(JekyllContentItem item)
+        => !item.IsPost
+           && (item.RelativePath.EndsWith("/index.md", StringComparison.OrdinalIgnoreCase)
+               || item.RelativePath.EndsWith("/index.html", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(item.RelativePath, "index.md", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(item.RelativePath, "index.html", StringComparison.OrdinalIgnoreCase));
+
+    private static int? ResolvePaginationPageSize(JekyllContentItem item, IReadOnlyDictionary<string, object?> siteConfig, JekyllSiteOptions options)
+    {
+        if (item.FrontMatter.TryGetValue("paginate", out var pageValue) && TryConvertToInt(pageValue, out var pageSize))
+        {
+            return pageSize;
+        }
+
+        if (siteConfig.TryGetValue("paginate", out var sitePaginateValue) && TryConvertToInt(sitePaginateValue, out pageSize))
+        {
+            return pageSize;
+        }
+
+        return options.PostsPerPage;
+    }
+
+    private static bool ShouldShowExcerpts(IReadOnlyDictionary<string, object?> siteConfig)
+    {
+        return siteConfig.TryGetValue("show_excerpts", out var showExcerptsValue)
+            && TryConvertToBoolean(showExcerptsValue) is true;
+    }
+
+    private static bool TryConvertToInt(object? value, out int result)
+    {
+        return value switch
+        {
+            int intValue => (result = intValue) > 0,
+            long longValue when longValue is > 0 and <= int.MaxValue => (result = (int)longValue) > 0,
+            string text when int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) => (result = parsed) > 0,
+            _ => int.TryParse(value?.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out result) && result > 0
+        };
+    }
+
+    private static string ResolvePaginationUrl(JekyllContentItem item, int pageNumber, IReadOnlyDictionary<string, object?> siteConfig)
+    {
+        var paginatePath = item.FrontMatter.TryGetValue("paginate_path", out var pagePathValue)
+            ? pagePathValue?.ToString()
+            : siteConfig.TryGetValue("paginate_path", out var configPathValue)
+                ? configPathValue?.ToString()
+                : null;
+
+        if (string.IsNullOrWhiteSpace(paginatePath))
+        {
+            return item.Url.TrimEnd('/') + $"/page{pageNumber}/";
+        }
+
+        var resolved = paginatePath.Replace(":num", pageNumber.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal);
+        if (resolved.StartsWith('/'))
+        {
+            return EnsureTrailingSlash(resolved);
+        }
+
+        return EnsureTrailingSlash(item.Url.TrimEnd('/') + "/" + resolved.TrimStart('/'));
+    }
+
+    private static string BuildExcerpt(JekyllContentItem item, MarkdownPipeline markdownPipeline, IReadOnlyDictionary<string, object?> siteConfig)
+    {
+        var excerptSource = ExtractExcerptSource(item.RawContent, item.FrontMatter, siteConfig);
+        if (string.IsNullOrWhiteSpace(excerptSource))
+        {
+            return string.Empty;
+        }
+
+        return item.SourcePath.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
+            ? excerptSource.Trim()
+            : Markdown.ToHtml(excerptSource, markdownPipeline).Trim();
+    }
+
+    private static string ExtractExcerptSource(
+        string content,
+        IReadOnlyDictionary<string, object?> frontMatter,
+        IReadOnlyDictionary<string, object?> siteConfig)
+    {
+        var separator = frontMatter.TryGetValue("excerpt_separator", out var frontMatterSeparator)
+            ? frontMatterSeparator?.ToString()
+            : siteConfig.TryGetValue("excerpt_separator", out var configSeparator)
+                ? configSeparator?.ToString()
+                : null;
+
+        if (!string.IsNullOrWhiteSpace(separator))
+        {
+            var separatorIndex = content.IndexOf(separator, StringComparison.Ordinal);
+            if (separatorIndex >= 0)
+            {
+                return content[..separatorIndex].Trim();
+            }
+        }
+
+        var normalized = content.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
+        if (normalized.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var paragraphs = normalized.Split("\n\n", 2, StringSplitOptions.None);
+        return paragraphs[0].Trim();
     }
 
     private static string ResolveDefaultScopeType(string relativePath, HashSet<string> collections, JekyllSiteOptions options)
@@ -588,11 +879,24 @@ public sealed class JekyllSiteBuilder
         return isDraft ? DateTimeOffset.UtcNow : null;
     }
 
-    private static string ResolvePermalink(string relativePath, Dictionary<string, object?> frontMatter, DateTimeOffset? date, string collection, bool isPost)
+    private static string ResolvePermalink(
+        string relativePath,
+        Dictionary<string, object?> frontMatter,
+        DateTimeOffset? date,
+        string collection,
+        bool isPost,
+        IReadOnlyDictionary<string, object?> siteConfig)
     {
         if (frontMatter.TryGetValue("permalink", out var permalinkValue) && permalinkValue?.ToString() is { Length: > 0 } permalink)
         {
             return NormalizePermalink(permalink, relativePath, date, collection);
+        }
+
+        if (isPost
+            && siteConfig.TryGetValue("permalink", out var sitePermalinkValue)
+            && sitePermalinkValue?.ToString() is { Length: > 0 } sitePermalink)
+        {
+            return NormalizePermalink(sitePermalink, relativePath, date, collection);
         }
 
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(relativePath);
@@ -691,6 +995,16 @@ public sealed class JekyllSiteBuilder
         return HasDatePrefix(fileName) ? fileName[11..] : fileName;
     }
 
+    private static string EnsureTrailingSlash(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return "/";
+        }
+
+        return url.EndsWith('/') ? url : url + "/";
+    }
+
     private static string UrlToOutputPath(string url)
     {
         if (string.Equals(url, "/", StringComparison.Ordinal))
@@ -707,10 +1021,20 @@ public sealed class JekyllSiteBuilder
         return Path.Combine(trimmed.Replace('/', Path.DirectorySeparatorChar), "index.html");
     }
 
-    private static bool ShouldSkip(string relativePath, JekyllSiteOptions options)
+    private static bool ShouldSkip(string relativePath, IReadOnlyDictionary<string, object?> siteConfig, JekyllSiteOptions options)
     {
         var normalized = relativePath.Replace('\\', '/');
+        if (ShouldIncludePath(normalized, siteConfig))
+        {
+            return false;
+        }
+
         if (normalized.StartsWith(options.Compatibility.DestinationDirectoryName + "/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (MatchesConfiguredPathList(normalized, siteConfig, "exclude"))
         {
             return true;
         }
@@ -725,6 +1049,52 @@ public sealed class JekyllSiteBuilder
             || string.Equals(segment, options.Compatibility.DataDirectoryName, StringComparison.OrdinalIgnoreCase));
     }
 
+    private static bool ShouldIncludePath(string normalizedPath, IReadOnlyDictionary<string, object?> siteConfig)
+        => MatchesConfiguredPathList(normalizedPath, siteConfig, "include");
+
+    private static bool MatchesConfiguredPathList(string normalizedPath, IReadOnlyDictionary<string, object?> siteConfig, string key)
+    {
+        if (!siteConfig.TryGetValue(key, out var configuredValue) || configuredValue is null)
+        {
+            return false;
+        }
+
+        var patterns = configuredValue switch
+        {
+            string single => [single],
+            IEnumerable<object?> sequence => sequence.Select(item => item?.ToString()).Where(static item => !string.IsNullOrWhiteSpace(item)).Cast<string>().ToList(),
+            _ => []
+        };
+
+        foreach (var pattern in patterns)
+        {
+            var normalizedPattern = pattern.Replace('\\', '/').Trim().Trim('/');
+            if (normalizedPattern.Length == 0)
+            {
+                continue;
+            }
+
+            if (normalizedPattern.Contains('*'))
+            {
+                var regexPattern = "^" + Regex.Escape(normalizedPattern).Replace(@"\*", ".*") + "($|/)";
+                if (Regex.IsMatch(normalizedPath, regexPattern, RegexOptions.IgnoreCase))
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (string.Equals(normalizedPath, normalizedPattern, StringComparison.OrdinalIgnoreCase)
+                || normalizedPath.StartsWith(normalizedPattern + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static bool IsSassFile(string path)
         => path.EndsWith(".scss", StringComparison.OrdinalIgnoreCase)
            || path.EndsWith(".sass", StringComparison.OrdinalIgnoreCase);
@@ -733,6 +1103,12 @@ public sealed class JekyllSiteBuilder
         => path.EndsWith(".md", StringComparison.OrdinalIgnoreCase)
            || path.EndsWith(".markdown", StringComparison.OrdinalIgnoreCase)
            || path.EndsWith(".html", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsTextStaticFile(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return extension is ".txt" or ".text" or ".js" or ".json" or ".xml" or ".css" or ".html" or ".svg" or ".csv" or ".yml" or ".yaml";
+    }
 
     private static void SetNestedValue(Dictionary<string, object?> root, string dottedPath, object? value)
     {

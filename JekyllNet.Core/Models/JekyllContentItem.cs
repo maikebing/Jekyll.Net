@@ -27,4 +27,8 @@ public sealed class JekyllContentItem
     public string RawContent { get; init; } = string.Empty;
 
     public string RenderedContent { get; set; } = string.Empty;
+
+    public string Excerpt { get; set; } = string.Empty;
+
+    public Dictionary<string, object?>? Paginator { get; set; }
 }
