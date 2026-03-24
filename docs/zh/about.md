@@ -1,28 +1,30 @@
 ---
-title: 关于本站
-description: 解释这套 Jekyll.Net 文档站的来源和改造方式。
+title: "关于本站"
+description: "述 JekyllNet 文档站何以分为 docs、blog、news 三层。"
 permalink: /zh/about/
-lang: zh-CN
-nav_key: about
+lang: "zh-CN"
+nav_key: "about"
 ---
 # 关于本站
 
-这套站点直接参考了 `LVGLSharp` 的 `docs` 外壳。
+此 `docs` 目录，今已非占位之页，乃吾正式之门面与手册也。
 
-## 保留了什么
+## 何以分三层
 
-- 页面布局组织
-- 顶部导航和页脚结构
-- 主要 CSS 视觉风格
-- 首页和导航页的面板化信息展示方式
+吾故分其站为三：
 
-## 没有照抄什么
+- **文档**：主导航、起步、兼容边界与部署之法
+- **博客**：特性、配置、CLI、多语与 AI 翻译之详解
+- **新闻**：里程碑与版本动态之记
 
-- 原仓库正文内容
-- 原仓库项目链接和品牌资源
-- 原仓库统计脚本
-- 原仓库针对自身主题设计的栏目结构
+如此，则入口不繁，而长文亦得其所安。
 
-## 现在这套站点适合做什么
+## 何以于技术亦有益
 
-它适合拿来给 `Jekyll.Net` 做一个清晰、轻量、可直接挂 GitHub Pages 的项目文档站，也方便后续继续往里面补更多兼容性和示例说明。
+此站本身，即吾之真实 fixture，常用以覆盖：
+
+- 中英双语路由与 translation links
+- layout、include、导航与页脚
+- `_config.yml` defaults 与多语 UI 文辞
+- snapshot 回归所护之生成结果
+---

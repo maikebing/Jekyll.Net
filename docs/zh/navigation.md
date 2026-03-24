@@ -1,58 +1,76 @@
 ---
 title: "文档导航"
-description: "按目标快速进入 Jekyll.Net 的文档内容。"
+description: "按所求而入 JekyllNet 之文。"
 permalink: /zh/navigation/
 layout: structured
 lang: "zh-CN"
 nav_key: "docs"
 intro:
-  eyebrow: "Documentation Map"
+  eyebrow: "文档总览"
   title: "文档导航"
-  description: "这套 GitHub Pages 文档不追求大而全，优先解决第一次了解项目、第一次本地运行、第一次挂到 Pages 上这三件事。"
+  description: "吾以文档页为纲，以博客页为详。君可按所办之事径取其篇，无须自首至尾尽读。"
 sections:
-  - title: "从这里开始"
-    description: "第一次来到仓库，通常只需要先读这几页。"
+  - title: "初来宜观"
+    description: "若初入仓库，先观此四页，最为得法。"
     variant: "quick-links"
     columns: 4
     section_class: ""
     items:
-      - title: "项目首页"
-        description: "看项目定位和已经具备的能力。"
-        url: /Jekyll.Net/zh/
+      - title: "首页"
+        description: "观吾之定位、能力边界与建议路径。"
+        url: /zh/
       - title: "快速开始"
-        description: "用 sample-site 跑出第一版站点。"
-        url: /Jekyll.Net/zh/getting-started/
-      - title: "GitHub Pages 配置"
-        description: "了解 docs 目录如何作为 Pages 源站。"
-        url: /Jekyll.Net/zh/github-pages/
+        description: "先构 sample-site 或 docs，一试即可知其效。"
+        url: /zh/getting-started/
+      - title: "站点部署"
+        description: "观 docs 如何直作 GitHub Pages 源站。"
+        url: /zh/github-pages/
       - title: "兼容性说明"
-        description: "明确当前和 GitHub Pages 之间的差距。"
-        url: /Jekyll.Net/zh/compatibility/
-  - title: "按阅读目的选择"
-    description: "不同角色关心的信息不一样，可以直接跳到对应页面。"
+        description: "先明已成、半成与未取之界。"
+        url: /zh/compatibility/
+  - title: "按题而读"
+    description: "今更详之文，多收于博客。"
+    variant: "quick-links"
+    columns: 4
+    section_class: ""
+    items:
+      - title: "特性"
+        description: "综观渲染、发布语义、分页与 Filters。"
+        url: /zh/blog/feature-overview/
+      - title: "配置"
+        description: "细述站点设置、defaults、分页、页脚与统计。"
+        url: /zh/blog/configuration-guide/
+      - title: "CLI 工作流"
+        description: "述 build、watch、serve、dotnet tool 与 Actions。"
+        url: /zh/blog/cli-workflow/
+      - title: "AI 翻译"
+        description: "述多语、provider、缓存、增量与 glossary。"
+        url: /zh/blog/ai-translation/
+  - title: "按意而择"
+    description: "来者所怀，各有不同。"
     variant: "cards"
     columns: 3
     section_class: ""
     items:
-      - title: "想先跑起来"
-        description: "先看快速开始，再回头看 sample-site 和输出目录结构。"
-      - title: "想做项目文档站"
-        description: "重点看 GitHub Pages 页面和当前 docs 目录的组织方式。"
-      - title: "想参与补齐兼容性"
-        description: "先看兼容性说明，再读博客里关于设计目标的文章。"
-  - title: "扩展阅读"
-    description: "这些页面不长，但能帮助你建立对项目走向的整体判断。"
+      - title: "吾欲先试之"
+        description: "宜先读快速开始，再对照 sample-site 与 docs 的输出结果。"
+      - title: "吾欲验其兼容"
+        description: "宜先读兼容性，再看特性总览与配置指南。"
+      - title: "吾欲作多语文档"
+        description: "宜直入 AI 翻译篇，并观中英文镜像路由之组织。"
+  - title: "欲知近状"
+    description: "若欲速判项目成熟度，可续观此三页。"
     variant: "list"
     columns: 1
     section_class: "panel panel-section"
     items:
-      - label: "项目动态"
-        description: "看一下当前仓库整理到什么程度了。"
-        url: /Jekyll.Net/zh/news/
+      - label: "首发新闻"
+        description: "总览 2026 年 3 月 25 日此轮所成。"
+        url: /zh/news/project-status/
       - label: "设计目标"
-        description: "说明为什么要单独做一个 Jekyll.Net。"
-        url: /Jekyll.Net/zh/blog/design-goals/
+        description: "明吾何以自立一套 Pages 风格文档站。"
+        url: /zh/blog/design-goals/
       - label: "关于本站"
-        description: "解释这套 docs 如何复用参考站点的外壳。"
-        url: /Jekyll.Net/zh/about/
+        description: "知 docs、blog、news 三层之所以分。"
+        url: /zh/about/
 ---

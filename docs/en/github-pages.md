@@ -1,30 +1,51 @@
 ---
-title: GitHub Pages Setup
-description: Publish the current docs directory as a GitHub Pages source site.
+title: "Deployment"
+description: "Publish the docs directory as a GitHub Pages source site or mirror its workflow in CI."
 permalink: /en/github-pages/
-lang: en
-nav_key: docs
+lang: "en"
+nav_key: "docs"
 ---
-# GitHub Pages Setup
+# Deployment
 
-The repository now contains a `docs` directory that is meant to act as a GitHub Pages friendly Jekyll source site.
+The repository now includes a `docs` directory shaped to work as a GitHub Pages style source site. It is also one of the project's golden regression fixtures, which makes it a useful reference for your own documentation repositories.
 
-## Directory purpose
+## Directory role
 
-- `docs/_config.yml` defines site title, language, and `baseurl`.
-- `docs/_layouts`, `docs/_includes`, and `docs/assets` make up the shell.
-- `docs/zh` and `docs/en` contain the project-specific content.
+Inside `docs` you will find:
 
-## Recommended repository setting
+- `docs/_config.yml` for site-level settings, locales, navigation labels, and shared defaults
+- `docs/_layouts` and `docs/_includes` for the shell
+- `docs/assets` for the visual layer
+- `docs/zh` and `docs/en` for mirrored bilingual content
 
-In GitHub Pages settings, switch the source to:
+## Custom domain settings
+
+The site is now configured for:
+
+```yml
+url: https://jekyllnet.help
+baseurl: ""
+```
+
+Because the site uses a custom domain, `baseurl` is intentionally empty. If the domain changes later, update both values together.
+
+The repo now also carries `docs/CNAME` with `jekyllnet.help`.
+
+## Basic GitHub Pages publishing shape
+
+If you want GitHub to publish the source folder directly, use:
 
 `Deploy from a branch` -> `main` -> `/docs`
 
-## About baseurl
+That keeps the repository easy to inspect because the source and the published Pages site live side by side.
 
-The current config sets `baseurl` to `/Jekyll.Net`, matching the current repository name. If the repository name changes later, update `docs/_config.yml` as well.
+## When to use Actions instead
 
-## Why this shape
+If you want a more explicit build pipeline, the repository now also includes GitHub Actions examples. That route is useful when you want to:
 
-The request here was to reuse the reference documentation shell and visual style directly, while rewriting all content for Jekyll.Net. That is exactly what this site does.
+- build with a pinned .NET SDK in CI
+- publish generated artifacts instead of raw source
+- reuse a workflow for package or release automation
+
+The related workflow guidance is summarized in [CLI and Development Workflow](/en/blog/cli-workflow/).
+---

@@ -1,83 +1,90 @@
 ---
-title: "Jekyll.Net 首页"
-description: "一个用 C# 编写的 Jekyll 风格静态站点生成器，目标是逐步靠近 GitHub Pages 行为。"
+title: "JekyllNet 首页"
+description: "吾乃以 C# 编之静态站点生成器，志在渐近 GitHub Pages 常见之法。"
 permalink: /zh/
 layout: structured
 lang: "zh-CN"
 nav_key: "docs"
 hero:
-  eyebrow: "GitHub Pages · Jekyll-compatible · .NET 10"
-  title: "用 .NET 写一个越来越像 GitHub Pages 的静态站点生成器"
-  lead: "Jekyll.Net 以 C# 和 .NET 10 为基础，正在补齐 GitHub Pages 常见工作流需要的 Front Matter、Layout、Include、Collection、Tag、Category 和 Sass 能力。"
-  primary_label: "开始阅读"
+  eyebrow: ".NET 静态站点生成"
+  title: "吾以 C# 造 Jekyll 风格之站"
+  lead: "吾名 JekyllNet，以 C# 与 .NET 10 为器，务在补齐文档站与内容站常用之道：Front Matter、布局与 Include、Collections、文章、分页、Sass、多语文档，以及诸多贴近 GitHub Pages 之行为。"
+  primary_label: "览文档导航"
   primary_url: /zh/navigation/
-  secondary_label: "查看 sample-site"
+  secondary_label: "观 sample-site"
   secondary_url: https://github.com/IoTSharp/Jekyll.Net/tree/main/sample-site
-  tertiary_label: "阅读 README"
-  tertiary_url: https://github.com/IoTSharp/Jekyll.Net/blob/main/README.md
+  tertiary_label: "读首发新闻"
+  tertiary_url: /zh/news/project-status/
   tags:
     - ".NET 10"
-    - "GitHub Pages"
-    - "Jekyll-style"
-    - "Markdown + Sass"
-  code_title: "Quick Start"
+    - "GitHub Pages 风格"
+    - "Markdown + Liquid"
+    - "CLI build/watch/serve"
+  code_title: "起步二令"
   code: |
     dotnet run --project .\JekyllNet.Cli -- build --source .\sample-site
-  note_title: "一句话理解"
-  note_text: "这个项目不是在包装现成的 Jekyll，而是在用 C# 逐步重建一条能服务 GitHub Pages 风格站点的静态生成链路。"
+    dotnet run --project .\JekyllNet.Cli -- serve --source .\docs --port 5055
+  note_title: "一言以蔽之"
+  note_text: "吾非包裹既有 Jekyll 者，乃欲以 .NET 重铸一条近乎 GitHub Pages 心法之生成路径。"
 stats:
-  - label: "运行时"
+  - label: "所用运行时"
     value: ".NET 10"
-  - label: "当前入口"
-    value: "CLI build"
-  - label: "站点特性"
-    value: "Markdown + Liquid 子集"
-  - label: "目标方向"
-    value: "靠近 GitHub Pages"
+  - label: "今之工作流"
+    value: "build / watch / serve"
+  - label: "文档形制"
+    value: "中英双语"
+  - label: "回归之守"
+    value: "Golden Snapshot"
 sections:
-  - title: "当前已经具备什么"
-    description: "仓库当前实现已经覆盖一个 GitHub Pages 风格站点最核心的一批静态生成能力。"
+  - title: "今已可为何事"
+    description: "吾之实现，今已足以支撑真实文档站、小型内容站，以及主题兼容之验证。"
     variant: "cards"
     columns: 3
     section_class: ""
     items:
-      - title: "内容解析"
-        description: "支持 _config.yml、YAML Front Matter、Markdown 到 HTML，以及基础的标签和过滤器。"
-      - title: "模版能力"
-        description: "支持 _layouts、嵌套 layout、_includes、_data，以及带输出的 collections。"
-      - title: "站点资源"
-        description: "支持 Sass/SCSS 编译，并把静态资源复制到 _site 输出目录。"
-  - title: "推荐阅读入口"
-    description: "如果你是第一次接触这个仓库，下面这几个入口最省时间。"
+      - title: "内容之道"
+        description: "已通 YAML Front Matter、Markdown、Collections、Posts、Tags、Categories、摘要、Draft/Future/Unpublished 诸语义。"
+      - title: "主题之道"
+        description: "已通嵌套 Layout、Include、常见 Liquid 控制语法、高价值 Filters、defaults、静态文件 Front Matter 与 Sass。"
+      - title: "工程之道"
+        description: "CLI、Snapshot 回归、GitHub Actions 示例、dotnet tool 打包元数据与 winget 模板，今皆在库中。"
+  - title: "按志而入"
+    description: "来者所求不同，其所当先观者亦异。"
     variant: "quick-links"
     columns: 4
     section_class: ""
     items:
-      - title: "文档导航"
-        description: "按用途挑选你应该先读的页面。"
-        url: /Jekyll.Net/zh/navigation/
-      - title: "快速开始"
-        description: "用 sample-site 跑出第一版静态输出。"
-        url: /Jekyll.Net/zh/getting-started/
-      - title: "GitHub Pages"
-        description: "查看如何把当前 docs 目录直接挂到 GitHub Pages。"
-        url: /Jekyll.Net/zh/github-pages/
-      - title: "兼容性说明"
-        description: "先看清现在已经支持什么、还没支持什么。"
-        url: /Jekyll.Net/zh/compatibility/
-  - title: "一条最短路径"
-    description: "如果你只想用最短时间感受项目当前状态，可以按照这条路径走。"
+      - title: "先试其行"
+        description: "先本地构建一次，再观输出与预览。"
+        url: /zh/getting-started/
+      - title: "审其兼容"
+        description: "先明何者已成，何者尚待雕琢。"
+        url: /zh/compatibility/
+      - title: "究其配置"
+        description: "观 _config.yml 今已可倚赖之项。"
+        url: /zh/blog/configuration-guide/
+      - title: "广其语言"
+        description: "观 locales、自动 translation links 与 AI 翻译之法。"
+        url: /zh/blog/ai-translation/
+  - title: "宜续观者"
+    description: "若欲速得其全貌，可循此数篇。"
     variant: "list"
     columns: 1
     section_class: "panel panel-section"
     items:
-      - label: "先读 README，确认项目目标与当前限制"
-        description: "仓库首页已经列出能力边界。"
-        url: https://github.com/IoTSharp/Jekyll.Net/blob/main/README.md
-      - label: "用 sample-site 执行一次 build"
-        description: "直接观察 _site 产物和生成结果。"
-        url: /Jekyll.Net/zh/getting-started/
-      - label: "打开文档导航，找到与你目标最接近的入口"
-        description: "开发文档、兼容性、Pages 配置都从这里开始。"
-        url: /Jekyll.Net/zh/navigation/
+      - label: "特性总览"
+        description: "综述渲染、发布语义、分页、Filters 与回归之守。"
+        url: /zh/blog/feature-overview/
+      - label: "配置指南"
+        description: "分门别类而述 _config.yml 诸要。"
+        url: /zh/blog/configuration-guide/
+      - label: "CLI 与开发工作流"
+        description: "述 build、watch、serve、CI 与打包分发之衔接。"
+        url: /zh/blog/cli-workflow/
+      - label: "AI 翻译工作流"
+        description: "述 provider、缓存、增量翻译、术语表与兼容端点。"
+        url: /zh/blog/ai-translation/
+      - label: "首发新闻"
+        description: "观 2026 年 3 月 25 日里程碑所成。"
+        url: /zh/news/project-status/
 ---

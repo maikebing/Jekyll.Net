@@ -1,0 +1,17 @@
+PackageIdentifier: IoTSharp.JekyllNet
+PackageVersion: __VERSION__
+PackageLocale: en-US
+Publisher: IoTSharp
+PublisherUrl: https://github.com/IoTSharp/Jekyll.Net
+PublisherSupportUrl: https://github.com/IoTSharp/Jekyll.Net/issues
+PackageName: Jekyll.Net
+PackageUrl: https://github.com/IoTSharp/Jekyll.Net
+ShortDescription: Jekyll-style static site generator and local development server for .NET.
+Tags:
+  - dotnet
+  - jekyll
+  - github-pages
+  - static-site-generator
+License: See repository
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

@@ -1,0 +1,36 @@
+# winget Packaging Notes
+
+`Jekyll.Net` 在仓库里已经准备好了 `winget` 提交模板，但真正提交到社区源之前，还需要一个已发布的 Windows 可下载资产。
+
+推荐的发布物：
+
+- `JekyllNet-win-x64.zip`
+- 内部包含 `jekyllnet.exe`
+
+仓库里现成可用的辅助内容：
+
+- `.github/workflows/release-artifacts.yml`
+- `packaging/winget/templates/IoTSharp.JekyllNet.yaml`
+- `packaging/winget/templates/IoTSharp.JekyllNet.installer.yaml`
+- `packaging/winget/templates/IoTSharp.JekyllNet.locale.en-US.yaml`
+
+## 建议流程
+
+1. 用 tag 或手动触发 `release-artifacts` workflow
+2. 上传 `JekyllNet-win-x64.zip` 到 GitHub Release
+3. 计算 zip 的 SHA256
+4. 用真实版本号、下载地址、SHA256 替换模板中的占位符
+5. 用 `winget validate` 或 `wingetcreate validate` 验证
+6. 向 `microsoft/winget-pkgs` 提交 PR
+
+## 需要替换的占位符
+
+- `__VERSION__`
+- `__WINDOWS_X64_ZIP_URL__`
+- `__WINDOWS_X64_ZIP_SHA256__`
+
+## 说明
+
+- 当前模板按 `portable` 命令行工具分发思路准备
+- 命令别名为 `jekyllnet`
+- 如果未来改成 MSI 或其他安装器类型，需同步调整 installer manifest

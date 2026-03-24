@@ -1,29 +1,58 @@
 ---
-title: 快速开始
-description: 在本地运行 Jekyll.Net，并生成 sample-site 的静态输出。
+title: "快速开始"
+description: "试于本地运行 JekyllNet，构其 sample-site，并观 docs 站点。"
 permalink: /zh/getting-started/
-lang: zh-CN
-nav_key: docs
+lang: "zh-CN"
+nav_key: "docs"
 ---
 # 快速开始
 
-`Jekyll.Net` 目前最直接的入口是 CLI 里的 `build` 命令。
+欲知吾是否可用，莫若先行一构。今仓库之中，有二处最宜试之：
 
-## 运行命令
+- `sample-site`，可以观内容站与主题组织之法
+- `docs`，可以观吾自家中英双语文档站之生成
+
+## 一、先行一构
 
 ```powershell
 dotnet run --project .\JekyllNet.Cli -- build --source .\sample-site
 ```
 
-生成结果默认输出到 `sample-site\_site`。
+其默认输出，在 `sample-site\_site`。
 
-## 你会看到什么
+若君欲直观当前文档站之产物，可行：
 
-- `index.md` 会被渲染成首页。
-- `_posts` 里的文章会生成日期型永久链接。
-- `_layouts` 和 `_includes` 会组合成最终 HTML。
-- `assets/scss` 或 `assets/css` 会被复制或编译到输出目录。
+```powershell
+dotnet run --project .\JekyllNet.Cli -- build --source .\docs --destination .\artifacts\docs-site
+```
 
-## 什么时候读这个页面
+## 二、启其本地预览
 
-如果你想先确认项目是不是已经能支撑一个小型文档站，这页就是第一站。跑通一次以后，再去看 [兼容性说明](/Jekyll.Net/zh/compatibility/) 会更容易理解目前缺口在哪里。
+今 CLI 已具 `watch` 与 `serve` 二途，可用于文稿反复修订与静态预览。
+
+```powershell
+dotnet run --project .\JekyllNet.Cli -- watch --source .\docs
+dotnet run --project .\JekyllNet.Cli -- serve --source .\docs --port 5055
+```
+
+- `watch` 宜于频改频观之时。
+- `serve` 宜于求一稳定本地地址以便浏览之时。
+
+## 三、构成之后，当验何物
+
+生成既毕，可先验此数端：
+
+- Markdown 页面是否各归其 permalink 所指目录
+- `_posts` 是否依日期或站点级 permalink 规则输出
+- `_layouts`、`_includes` 与 Liquid 表达式是否皆落成 HTML
+- Sass / SCSS 资源是否已入输出树
+- `_config.yml` 之站点配置，是否已见于链接、页脚、统计脚本与多语辅助信息
+
+## 四、可续观者
+
+既见一构功成，则下列诸篇最宜续读：
+
+- [兼容性说明](/zh/compatibility/)
+- [特性总览](/zh/blog/feature-overview/)
+- [配置指南](/zh/blog/configuration-guide/)
+- [CLI 与开发工作流](/zh/blog/cli-workflow/)

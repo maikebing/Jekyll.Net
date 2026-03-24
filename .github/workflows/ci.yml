@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore ./JekyllNet.slnx
+
+      - name: Test
+        run: dotnet test ./JekyllNet.slnx --configuration Release --no-restore
+
+      - name: Build docs site
+        run: dotnet run --project ./JekyllNet.Cli -- build --source ./docs --destination ./artifacts/sites/docs
+
+      - name: Build sample-site
+        run: dotnet run --project ./JekyllNet.Cli -- build --source ./sample-site --destination ./artifacts/sites/sample-site
+
+      - name: Pack dotnet tool
+        run: dotnet pack ./JekyllNet.Cli/JekyllNet.Cli.csproj --configuration Release --no-restore --output ./artifacts/nupkg
+
+      - name: Upload site artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-sites
+          path: ./artifacts/sites
+
+      - name: Upload tool package
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-tool-package
+          path: ./artifacts/nupkg

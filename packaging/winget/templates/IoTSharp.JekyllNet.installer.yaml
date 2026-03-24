@@ -1,0 +1,13 @@
+PackageIdentifier: IoTSharp.JekyllNet
+PackageVersion: __VERSION__
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: jekyllnet.exe
+    PortableCommandAlias: jekyllnet
+Installers:
+  - Architecture: x64
+    InstallerUrl: __WINDOWS_X64_ZIP_URL__
+    InstallerSha256: __WINDOWS_X64_ZIP_SHA256__
+ManifestType: installer
+ManifestVersion: 1.6.0

@@ -5,6 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="System.CommandLine" Version="2.0.5" />
   </ItemGroup>
 
@@ -13,6 +14,22 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>jekyllnet</ToolCommandName>
+    <PackageId>JekyllNet.Tool</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>IoTSharp</Authors>
+    <Description>Jekyll-style static site generator and local docs server for .NET.</Description>
+    <PackageTags>jekyll;github-pages;static-site-generator;dotnet-tool</PackageTags>
+    <RepositoryUrl>https://github.com/IoTSharp/Jekyll.Net</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/IoTSharp/Jekyll.Net</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageOutputPath>..\artifacts\nupkg</PackageOutputPath>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+  </ItemGroup>
 
 </Project>

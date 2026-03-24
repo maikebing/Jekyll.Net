@@ -1,29 +1,58 @@
 ---
-title: Getting Started
-description: Run Jekyll.Net locally and generate the sample-site output.
+title: "Getting Started"
+description: "Run JekyllNet locally, generate the sample-site output, and preview the docs site."
 permalink: /en/getting-started/
-lang: en
-nav_key: docs
+lang: "en"
+nav_key: "docs"
 ---
 # Getting Started
 
-The most direct entry point today is the CLI `build` command.
+The fastest way to understand JekyllNet is still to run a real site build locally. The repository now gives you two strong fixtures for that:
 
-## Run the command
+- `sample-site` for a compact content and theme example
+- `docs` for the project's own bilingual documentation site
+
+## 1. Run a first build
 
 ```powershell
 dotnet run --project .\JekyllNet.Cli -- build --source .\sample-site
 ```
 
-The generated output goes to `sample-site\_site` by default.
+By default the generated output goes to `sample-site\_site`.
 
-## What you will see
+If you want to inspect the docs site instead:
 
-- `index.md` becomes the home page.
-- Posts under `_posts` get date-based permalinks.
-- `_layouts` and `_includes` combine into final HTML.
-- `assets/scss` and `assets/css` are compiled or copied into the output.
+```powershell
+dotnet run --project .\JekyllNet.Cli -- build --source .\docs --destination .\artifacts\docs-site
+```
 
-## When to read this page
+## 2. Open a live preview
 
-Use this page first if you want to know whether the project is already good enough for a small documentation site. After one successful run, the [compatibility page](/Jekyll.Net/en/compatibility/) will make much more sense.
+The CLI now exposes both `watch` and `serve`, so you can choose between incremental rebuild feedback and a simple static preview server.
+
+```powershell
+dotnet run --project .\JekyllNet.Cli -- watch --source .\docs
+dotnet run --project .\JekyllNet.Cli -- serve --source .\docs --port 5055
+```
+
+Use `watch` while editing content and templates. Use `serve` when you want a predictable local preview endpoint without wiring another server yourself.
+
+## 3. What to inspect in the output
+
+After the build completes, verify a few concrete things:
+
+- Markdown pages become `index.html` output under their permalink paths.
+- Posts under `_posts` use date-based or configured permalink patterns.
+- `_layouts`, `_includes`, and Liquid expressions resolve into final HTML.
+- Sass and SCSS assets are compiled or copied into the output tree.
+- Site metadata from `_config.yml` appears in generated URLs, footer metadata, analytics snippets, or localization helpers when configured.
+
+## 4. Good next reads
+
+Once you have seen a build succeed, these pages become much more useful:
+
+- [Compatibility Notes](/en/compatibility/)
+- [Feature Overview](/en/blog/feature-overview/)
+- [Configuration Guide](/en/blog/configuration-guide/)
+- [CLI and Development Workflow](/en/blog/cli-workflow/)
+---

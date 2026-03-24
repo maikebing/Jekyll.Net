@@ -1,6 +1,6 @@
 ---
 title: "Documentation Map"
-description: "Jump into the Jekyll.Net docs based on your goal."
+description: "Jump into the JekyllNet docs based on your goal."
 permalink: /en/navigation/
 layout: structured
 lang: "en"
@@ -8,51 +8,69 @@ nav_key: "docs"
 intro:
   eyebrow: "Documentation Map"
   title: "Documentation Map"
-  description: "This Pages site is intentionally compact. It is optimized around first-time project understanding, first local run, and first GitHub Pages setup."
+  description: "Use the docs pages for orientation and setup, then move into the blog for deeper writing on features, configuration, CLI workflows, and AI-powered localization."
 sections:
-  - title: "Start here"
-    description: "These are the pages most readers need first."
+  - title: "First stops"
+    description: "These pages are the fastest route from zero context to a successful local run."
     variant: "quick-links"
     columns: 4
     section_class: ""
     items:
       - title: "Home"
-        description: "See the project identity and currently available capabilities."
-        url: /Jekyll.Net/en/
+        description: "Project identity, current capability range, and recommended reading paths."
+        url: /en/
       - title: "Getting started"
-        description: "Build sample-site and inspect the first output."
-        url: /Jekyll.Net/en/getting-started/
-      - title: "GitHub Pages setup"
-        description: "Understand how the docs folder is meant to be published."
-        url: /Jekyll.Net/en/github-pages/
+        description: "Run sample-site or docs locally and inspect the generated output."
+        url: /en/getting-started/
+      - title: "Deployment"
+        description: "Publish the docs folder or align a workflow around the generated site."
+        url: /en/github-pages/
       - title: "Compatibility"
-        description: "Understand the current gap versus GitHub Pages."
-        url: /Jekyll.Net/en/compatibility/
+        description: "See the implemented, partial, and intentionally out-of-scope areas."
+        url: /en/compatibility/
+  - title: "Choose by topic"
+    description: "The blog now carries the detailed documentation."
+    variant: "quick-links"
+    columns: 4
+    section_class: ""
+    items:
+      - title: "Features"
+        description: "Rendering, publishing semantics, filters, pagination, and site-building behavior."
+        url: /en/blog/feature-overview/
+      - title: "Configuration"
+        description: "Site options, defaults, include or exclude rules, footer metadata, analytics, and pagination config."
+        url: /en/blog/configuration-guide/
+      - title: "CLI workflow"
+        description: "Build, watch, serve, dotnet tool packaging, GitHub Actions, and local preview."
+        url: /en/blog/cli-workflow/
+      - title: "AI translation"
+        description: "Locales, translation links, provider selection, cache, incremental translation, and glossary."
+        url: /en/blog/ai-translation/
   - title: "Choose by intent"
-    description: "Different readers want different things. Jump directly to the relevant page."
+    description: "Different contributors usually start with different questions."
     variant: "cards"
     columns: 3
     section_class: ""
     items:
-      - title: "I want to run it now"
-        description: "Read getting started first, then inspect sample-site and the output tree."
-      - title: "I want a project docs site"
-        description: "Focus on the GitHub Pages page and the new docs directory layout."
-      - title: "I want to help with compatibility"
-        description: "Read the compatibility note first, then the short design article in the blog."
-  - title: "Extended reading"
-    description: "These pages are short, but they help frame the project direction."
+      - title: "I want to try it today"
+        description: "Start with getting started, then keep feature overview open while comparing the generated output to sample-site."
+      - title: "I want theme compatibility"
+        description: "Read compatibility first, then move to the feature overview and configuration guide for the details behind that matrix."
+      - title: "I want multilingual docs"
+        description: "Read the AI translation article and inspect how the docs folder mirrors English and Chinese routes."
+  - title: "Release context"
+    description: "If you want to understand the current maturity quickly, read these next."
     variant: "list"
     columns: 1
     section_class: "panel panel-section"
     items:
-      - label: "Project news"
-        description: "Check how far the repository and docs have been organized so far."
-        url: /Jekyll.Net/en/news/
+      - label: "Launch announcement"
+        description: "The first-release news post summarizes what shipped on March 25, 2026."
+        url: /en/news/project-status/
       - label: "Design goals"
-        description: "Why Jekyll.Net deserves its own Pages documentation shell."
-        url: /Jekyll.Net/en/blog/design-goals/
+        description: "Why JekyllNet now has a Pages-style documentation site of its own."
+        url: /en/blog/design-goals/
       - label: "About this site"
-        description: "How this docs site reused the reference shell while changing all content."
-        url: /Jekyll.Net/en/about/
+        description: "How this docs source was organized and why docs, blog, and news are separated."
+        url: /en/about/
 ---

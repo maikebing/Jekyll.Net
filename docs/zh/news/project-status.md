@@ -1,25 +1,39 @@
 ---
-title: docs 站点已落地
-description: Jekyll.Net 现在已经有一套可直接放在 docs 下的 GitHub Pages 源站。
+title: "JekyllNet 首发：文档站、工作流与兼容性基线"
+description: "JekyllNet 文档站与当前能力基线之第一篇正式首发公告。"
 permalink: /zh/news/project-status/
-lang: zh-CN
-nav_key: news
+lang: "zh-CN"
+nav_key: "news"
 ---
-# docs 站点已落地
+# JekyllNet 首发：文档站、工作流与兼容性基线
 
-当前仓库已经补上一套 `docs` 目录形式的 GitHub Pages 文档站。
+时在 2026 年 3 月 25 日，吾至一可正式告世之里程碑：今已有可用之中英双语文档站、较完备之 CLI 工作流、更强之回归保护，与更清晰之兼容边界。
 
-## 这次落地的重点
+## 今次所成
 
-- 直接复用了参考站点的页面壳和 CSS 风格。
-- 没有照搬参考站点的正文内容。
-- 新内容围绕 `Jekyll.Net` 当前能力、快速开始和 Pages 配置展开。
-- 中英文入口保持了同构，后续追加页面时更容易同步。
+- 正式之 `docs` 中英双语源站
+- 按特性、配置、CLI 工作流、AI 翻译而分之博客文章
+- `build`、`watch`、`serve` 三条 CLI 工作流
+- `docs` 与 `sample-site` 之 golden output 回归
+- 更完整之主题侧 Filters
+- 更稳之分页与发布语义
+- 具缓存、增量复用、glossary 与 OpenAI 兼容 provider 支持之 AI 翻译
 
-## 接下来最自然的演进方向
+## 此次何以为重
 
-可以继续往这套站点里补：
+今之 JekyllNet，较前更近人所实用之产品形态：
 
-- 更多与 GitHub Pages 兼容性相关的专题页
-- 当前 Liquid 子集实现细节
-- 更多 sample-site 示例拆解
+- 不复只有源码与 README，乃有正式文档入口
+- 不复只有单次 build，乃有本地预览与持续迭代之流
+- 不复专赖人工回归，乃有 snapshot fixtures 之守
+- 不复唯言方向，乃有更明之当前支持边界
+
+## 后续所务
+
+后续之工，今已较聚焦，主要在：
+
+- 余下 Liquid 边角语义之继续对齐
+- Pagination 于更多 Jekyll 边界之细节一致
+- 继续扩 `_config.yml` 覆盖，但专取真能益于主题兼容者
+- 续补示例、配方与部署文稿
+---

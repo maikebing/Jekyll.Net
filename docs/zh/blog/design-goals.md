@@ -1,20 +1,30 @@
 ---
-title: 为什么要给 Jekyll.Net 单独写一套 Pages 文档
-description: 为项目准备一套直接面向 GitHub Pages 的说明站点。
+title: "何以吾今须有一套 Pages 风格文档站"
+description: "此 docs 既为对外手册，亦为受 snapshot 所护之真实兼容性样本。"
 permalink: /zh/blog/design-goals/
-lang: zh-CN
-nav_key: blog
+lang: "zh-CN"
+nav_key: "blog"
 ---
-# 为什么要给 Jekyll.Net 单独写一套 Pages 文档
+# 何以吾今须有一套 Pages 风格文档站
 
-`Jekyll.Net` 这个项目本身就在朝 GitHub Pages 风格兼容靠拢，所以最自然的展示方式，其实就是给它自己也准备一套 Pages 文档站。
+吾之所向，在渐近 GitHub Pages 常见之法。既然如此，最自然者，便是使吾亦立于一套 Pages 风格文档站之上。
 
-## 这样做的价值
+## 此站不独为门面
 
-- 项目本身更容易被第一次来到仓库的人理解。
-- `docs` 目录可以直接成为项目对外展示面。
-- 后续补兼容性时，也能顺手拿这套站点当回归样例。
+今此 docs 源站，同时任三事：
 
-## 为什么直接借参考站点外壳
+- 为初识吾者立清晰入口
+- 为特性、配置、工作流诸文安其所
+- 作为真实站点 fixture，参与 snapshot 回归
 
-这样可以快速得到一套成熟、清楚、视觉完成度高的文档壳，而不是花时间从零搭一套页面系统。真正值得重新编写的是内容本身，不是已经成熟的布局和样式。
+比诸仅有 README，抑或脱离实现之设计稿，此法更足以随项目长久而进。
+
+## 何以兼容性为先
+
+吾所求者，不在自创奇诡之站点个性，而在使常见 Jekyll 形制，于 .NET 中仍保其熟悉：
+
+- 熟悉之目录结构
+- 熟悉之 front matter 与 permalink 预期
+- 熟悉之 layout 与 include 组织
+- 熟悉之 Filters、分页与主题侧行为
+---

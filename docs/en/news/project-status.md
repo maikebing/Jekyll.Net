@@ -1,25 +1,30 @@
 ---
-title: docs site is now in place
-description: Jekyll.Net now has a GitHub Pages style source site under docs.
+title: "JekyllNet launch: docs, workflows, and compatibility baseline"
+description: "The first public release note for the JekyllNet docs site and current feature baseline."
 permalink: /en/news/project-status/
-lang: en
-nav_key: news
+lang: "en"
+nav_key: "news"
 ---
-# docs site is now in place
+# JekyllNet launch: docs, workflows, and compatibility baseline
 
-The repository now includes a `docs` directory that can serve as a GitHub Pages style documentation site.
+On March 25, 2026, JekyllNet reached an important public milestone: the project now has a real bilingual documentation site, a fuller CLI workflow, stronger regression safety, and a much clearer compatibility story.
 
-## What this delivery focused on
+## What shipped in this milestone
 
-- It directly reused the reference site shell and CSS style.
-- It did not copy the reference repository content.
-- The new copy is centered on Jekyll.Net capabilities, quick start, and Pages setup.
-- Chinese and English entry points follow the same structure to make future updates easier.
+- a proper `docs` source site in English and Chinese
+- blog articles organized by feature set, configuration, CLI workflow, and AI translation
+- `build`, `watch`, and `serve` CLI flows
+- golden output regression for both `docs` and `sample-site`
+- broader theme-facing filter coverage
+- stronger pagination and publishing semantics
+- AI-assisted translation with cache, incremental reuse, glossary support, and OpenAI-compatible provider support
 
-## Natural next steps
+## What is next
 
-This site can grow with:
+The remaining work is now narrower and easier to prioritize:
 
-- more Pages compatibility notes
-- more detail on the current Liquid subset implementation
-- more walkthroughs for the sample-site inputs and outputs
+- closer alignment on the last Liquid edge cases
+- tighter pagination behavior in the remaining Jekyll corners
+- continued `_config.yml` coverage expansion where it materially improves theme compatibility
+- more examples, recipes, and deployment documentation over time
+---

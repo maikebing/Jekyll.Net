@@ -1,54 +1,52 @@
 ---
-title: 兼容性说明
-description: Jekyll.Net 已覆盖、部分覆盖与尚未覆盖的能力边界。
+title: "兼容性说明"
+description: "吾已实现、部分实现，与尚待补齐之边界。"
 permalink: /zh/compatibility/
-lang: zh-CN
-nav_key: docs
+lang: "zh-CN"
+nav_key: "docs"
 ---
 # 兼容性说明
 
-`Jekyll.Net` 的目标不是做一个“带一点 Liquid 语法的任意静态站点生成器”，而是逐步补齐常见的 Jekyll / GitHub Pages 行为，并且保持 .NET 代码库可测试、可维护。
+吾之志，不在为“略通些许 Liquid 语法”之泛用静态生成器；吾所务者，乃使常见 Jekyll / GitHub Pages 风格站点，于 .NET 中亦可安然而行。
 
-## 兼容矩阵
+## 兼容之矩
 
 | 领域 | 状态 | 说明 |
 | --- | --- | --- |
-| `_config.yml` 读取 | 已完成 | 常用站点配置、defaults、include/exclude、站点级 permalink fallback、页脚和统计配置都已进入构建流程。 |
-| Front matter | 已完成 | YAML front matter、defaults、页面变量、静态文件 front matter 与 excerpt 都已支持。 |
-| Markdown 与布局 | 已完成 | Markdown 转 HTML、嵌套 layout、includes、collections、posts、tags、categories 都已在正常构建链路中。 |
-| Snapshot 回归 | 已完成 | `docs` 与 `sample-site` 都有 golden output / snapshot 回归保护。 |
-| Filters | 已完成 | `relative_url`、`absolute_url`、`markdownify`、`where`、`sort`、`map`、`compact`、`jsonify`、`slugify` 等高价值 filter 已补齐。 |
-| 发布语义 | 已完成 | `drafts`、`future`、`unpublished` 都已经接入真实构建行为。 |
-| Pagination | 部分完成 | 基线分页已可用，支持 `paginate`、`paginate_path`、结构化 `pagination.per_page`、`pagination.path` 和单页禁用。更细的 Jekyll 对齐还在继续。 |
-| Liquid 控制语义 | 部分完成 | `if`、`for`、`unless`、`case/when`、`capture`、`contains` 可用。剩余缺口主要集中在 `assign` 作用域和少量 include 时机边角。 |
-| GitHub Pages 对齐 | 部分完成 | 已覆盖常见行为，但还没有承诺与某个 GitHub Pages 固定版本 1:1 完全一致。 |
-| 插件生态 | 尚未支持 | 第三方 Jekyll 插件兼容仍然不在当前支持边界内。 |
+| `_config.yml` 加载 | 已成 | 常见站点配置、defaults、include/exclude、站点级 permalink fallback、页脚元数据、统计配置与自定义域名设置皆已接入。 |
+| Front Matter | 已成 | 已通 YAML front matter、defaults、页面变量、静态文件 front matter、摘要与 `excerpt_separator`。 |
+| Markdown 与布局 | 已成 | 已通 Markdown 转 HTML、嵌套 layout、include、collections、posts、tags、categories 与 Sass。 |
+| Liquid 控制语法 | 半成 | `if`、`unless`、`case/when`、`capture`、`contains` 与增强 `for` 已可用，余者多在 `assign` 作用域与 include 时机之边角。 |
+| Filters | 已成 | 已具 `relative_url`、`absolute_url`、`markdownify`、`where`、`sort`、`map`、`compact`、`jsonify`、`slugify` 等高价值 filters。 |
+| 发布语义 | 已成 | `drafts`、`future`、`unpublished`、嵌套 index permalink 与 excerpt 行为，今皆接入真实构建。 |
+| Pagination | 半成 | 已通 `paginate`、`paginate_path`、`pagination.per_page`、`pagination.path` 与按页禁用；然更多 Jekyll 边角，尚待细磨。 |
+| 多语文档 | 已成 | locale 级 defaults、自动 translation links 与 AI 辅助翻译工作流，今皆可用。 |
+| Snapshot 回归 | 已成 | `docs` 与 `sample-site` 皆有 golden output 回归之守。 |
+| 插件生态 | 未取 | 第三方 Jekyll 插件兼容，今尚不在支持之界。 |
 
-## 已验证的 Fixture
+## 今已宜于何用
 
-- `sample-site`：一个更接近真实内容站点的 golden regression 基线
-- `docs`：项目自己的多语言文档站，也由 snapshot 测试锁定输出
-- 聚焦 renderer 的小型 fixture：用于验证 assign、include、嵌套块、filters、pagination 等语义
-
-## 当前边界
-
-现在的 `Jekyll.Net` 已经比较适合：
+吾今较宜用于：
 
 - 项目文档站
-- 中小型内容站
-- 带 AI 辅助翻译的多语言文档站
-- 主要依赖常见 Liquid 与常见 `_config.yml` 行为的 GitHub Pages 风格主题
+- 中英乃至更多语种之多语文档站
+- 结构近于常见 Jekyll 约定之小中型内容站
+- 不依重插件，而依主流 Liquid 与配置行为之 GitHub Pages 风格主题
 
-但它现在还没有宣称：
+## 今未敢遽言者
 
-- 与 GitHub Pages 固定版本完全等价
-- 广泛兼容第三方插件
-- 完整覆盖 Liquid 全语法
-- 与不同分页插件的所有细节完全一致
+吾今尚未宣称：
 
-## 仍在继续补齐的地方
+- 与某一特定 GitHub Pages 发行版逐项尽同
+- 广泛兼容第三方 Jekyll 插件
+- 覆尽 Liquid 语言诸义
+- 对齐一切分页插件之变体
 
-- `assign` 在更多 Liquid 边角中的作用域对齐
-- `include` 在剩余 corner case 中的渲染时机
-- 当前分页基线之上的更多细节
-- 按功能域持续收紧兼容边界说明
+## 欲求其详
+
+可续观：
+
+- [特性总览](/zh/blog/feature-overview/)
+- [配置指南](/zh/blog/configuration-guide/)
+- [AI 翻译工作流](/zh/blog/ai-translation/)
+---
