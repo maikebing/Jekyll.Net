@@ -170,15 +170,12 @@ public sealed partial class TemplateRenderer
         ref int index)
     {
         var expression = tagContent["for".Length..].Trim();
-        var tokens = expression.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length < 3 || !string.Equals(tokens[1], "in", StringComparison.OrdinalIgnoreCase))
+        if (!TryParseForExpression(expression, out var itemName, out var collectionPath, out var parameters))
         {
             index = ExtractForBody(template, index, out _);
             return string.Empty;
         }
 
-        var itemName = tokens[0];
-        var collectionPath = string.Join(' ', tokens.Skip(2));
         index = ExtractForBody(template, index, out var body);
 
         if (!TryResolveObject(scope, collectionPath, out var resolved))
@@ -192,20 +189,45 @@ public sealed partial class TemplateRenderer
             IEnumerable<object?> enumerable => enumerable,
             _ => Array.Empty<object?>()
         };
+        var items = sequence.ToList();
+
+        if (parameters.Reversed)
+        {
+            items.Reverse();
+        }
+
+        if (parameters.Offset > 0)
+        {
+            items = items.Skip(parameters.Offset).ToList();
+        }
+
+        if (parameters.Limit is > 0)
+        {
+            items = items.Take(parameters.Limit.Value).ToList();
+        }
 
         var output = new System.Text.StringBuilder();
-        foreach (var item in sequence)
+        var savedItemVariable = SaveScopedValue(scope, itemName);
+        var savedForloopVariable = SaveScopedValue(scope, "forloop");
+        try
         {
-            var iterationScope = new Dictionary<string, object?>(scope, StringComparer.OrdinalIgnoreCase)
+            for (var index0 = 0; index0 < items.Count; index0++)
             {
-                [itemName] = item switch
+                var item = items[index0];
+                scope[itemName] = item switch
                 {
                     JekyllContentItem contentItem => ToLiquidObject(contentItem),
                     _ => item
-                }
-            };
+                };
+                scope["forloop"] = BuildForloopObject(index0, items.Count);
 
-            output.Append(RenderSegment(body, iterationScope, includes));
+                output.Append(RenderSegment(body, scope, includes));
+            }
+        }
+        finally
+        {
+            RestoreScopedValue(scope, itemName, savedItemVariable);
+            RestoreScopedValue(scope, "forloop", savedForloopVariable);
         }
 
         return output.ToString();
@@ -457,6 +479,106 @@ public sealed partial class TemplateRenderer
         }
 
         scope[key] = ResolveExpression(valueExpression, scope);
+    }
+
+    private static bool TryParseForExpression(
+        string expression,
+        out string itemName,
+        out string collectionPath,
+        out ForLoopParameters parameters)
+    {
+        itemName = string.Empty;
+        collectionPath = string.Empty;
+        parameters = new ForLoopParameters(null, 0, false);
+
+        var tokens = expression.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length < 3 || !string.Equals(tokens[1], "in", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        itemName = tokens[0];
+        var collectionTokens = new List<string>();
+        string? limitToken = null;
+        var offset = 0;
+        var reversed = false;
+
+        for (var tokenIndex = 2; tokenIndex < tokens.Length; tokenIndex++)
+        {
+            var token = tokens[tokenIndex];
+            if (token.StartsWith("limit:", StringComparison.OrdinalIgnoreCase))
+            {
+                limitToken = token["limit:".Length..];
+                continue;
+            }
+
+            if (token.StartsWith("offset:", StringComparison.OrdinalIgnoreCase))
+            {
+                var offsetToken = token["offset:".Length..];
+                if (string.Equals(offsetToken, "continue", StringComparison.OrdinalIgnoreCase))
+                {
+                    offset = 0;
+                    continue;
+                }
+
+                _ = int.TryParse(offsetToken, NumberStyles.Integer, CultureInfo.InvariantCulture, out offset);
+                continue;
+            }
+
+            if (string.Equals(token, "reversed", StringComparison.OrdinalIgnoreCase))
+            {
+                reversed = true;
+                continue;
+            }
+
+            collectionTokens.Add(token);
+        }
+
+        if (collectionTokens.Count == 0)
+        {
+            return false;
+        }
+
+        int? limit = null;
+        if (!string.IsNullOrWhiteSpace(limitToken)
+            && int.TryParse(limitToken, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedLimit)
+            && parsedLimit >= 0)
+        {
+            limit = parsedLimit;
+        }
+
+        collectionPath = string.Join(' ', collectionTokens);
+        parameters = new ForLoopParameters(limit, Math.Max(offset, 0), reversed);
+        return !string.IsNullOrWhiteSpace(itemName) && !string.IsNullOrWhiteSpace(collectionPath);
+    }
+
+    private static Dictionary<string, object?> BuildForloopObject(int index0, int length)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["name"] = "loop",
+            ["index"] = index0 + 1,
+            ["index0"] = index0,
+            ["rindex"] = length - index0,
+            ["rindex0"] = length - index0 - 1,
+            ["first"] = index0 == 0,
+            ["last"] = index0 == length - 1,
+            ["length"] = length
+        };
+
+    private static ScopedValueSnapshot SaveScopedValue(Dictionary<string, object?> scope, string key)
+        => scope.TryGetValue(key, out var existingValue)
+            ? new ScopedValueSnapshot(true, existingValue)
+            : new ScopedValueSnapshot(false, null);
+
+    private static void RestoreScopedValue(Dictionary<string, object?> scope, string key, ScopedValueSnapshot snapshot)
+    {
+        if (snapshot.Exists)
+        {
+            scope[key] = snapshot.Value;
+            return;
+        }
+
+        scope.Remove(key);
     }
 
     private static Dictionary<string, object?> ParseNamedArguments(string input, IReadOnlyDictionary<string, object?> variables)
@@ -1158,6 +1280,10 @@ public sealed partial class TemplateRenderer
     private static partial System.Text.RegularExpressions.Regex NamedArgumentPattern();
 
     private sealed record CaseBranch(string WhenValues, string Body);
+
+    private sealed record ForLoopParameters(int? Limit, int Offset, bool Reversed);
+
+    private sealed record ScopedValueSnapshot(bool Exists, object? Value);
 
     private sealed class LiquidValueComparer : IComparer<object?>
     {

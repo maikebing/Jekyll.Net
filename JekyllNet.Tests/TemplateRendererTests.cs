@@ -75,6 +75,112 @@ public sealed class TemplateRendererTests
     }
 
     [Fact]
+    public void AssignInsideForLoop_PersistsAfterLoop_WhileLoopVariableDoesNotLeak()
+    {
+        const string template = """
+            {% assign selected = 'none' %}
+            {% for item in page.items %}
+            {% assign selected = item.title %}
+            {% endfor %}
+            {{ selected }}|{{ item | default: 'missing' }}
+            """;
+
+        var output = _renderer.Render(template, new Dictionary<string, object?>
+        {
+            ["page"] = new Dictionary<string, object?>
+            {
+                ["items"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["title"] = "alpha" },
+                    new Dictionary<string, object?> { ["title"] = "omega" }
+                }
+            }
+        });
+
+        Assert.Equal("omega|missing", output.Trim());
+    }
+
+    [Fact]
+    public void IncludeInsideForLoop_UsesCurrentIterationValue()
+    {
+        const string template = """
+            {% for item in page.items %}
+            {% include row.html title=item.title %}
+            {% endfor %}
+            """;
+
+        var output = _renderer.Render(template, new Dictionary<string, object?>
+        {
+            ["page"] = new Dictionary<string, object?>
+            {
+                ["items"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["title"] = "alpha" },
+                    new Dictionary<string, object?> { ["title"] = "beta" }
+                }
+            }
+        }, new Dictionary<string, string>
+        {
+            ["row.html"] = "[{{ include.title }}]"
+        });
+
+        Assert.Equal("[alpha][beta]", output.Trim());
+    }
+
+    [Fact]
+    public void ForLoop_SupportsLimitOffsetAndMetadata()
+    {
+        const string template = """
+            {% for item in page.items offset:1 limit:2 %}
+            {{ forloop.index }}-{{ forloop.length }}-{{ forloop.first }}-{{ forloop.last }}:{{ item.title }}
+            {% endfor %}
+            """;
+
+        var output = _renderer.Render(template, new Dictionary<string, object?>
+        {
+            ["page"] = new Dictionary<string, object?>
+            {
+                ["items"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["title"] = "alpha" },
+                    new Dictionary<string, object?> { ["title"] = "beta" },
+                    new Dictionary<string, object?> { ["title"] = "gamma" },
+                    new Dictionary<string, object?> { ["title"] = "delta" }
+                }
+            }
+        });
+
+        Assert.Equal(
+            "1-2-True-False:beta\n2-2-False-True:gamma",
+            string.Join('\n', output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)));
+    }
+
+    [Fact]
+    public void ForLoop_Reversed_RendersItemsInReverseOrder()
+    {
+        const string template = """
+            {% for item in page.items reversed %}
+            {{ item.title }}
+            {% endfor %}
+            """;
+
+        var output = _renderer.Render(template, new Dictionary<string, object?>
+        {
+            ["page"] = new Dictionary<string, object?>
+            {
+                ["items"] = new List<object?>
+                {
+                    new Dictionary<string, object?> { ["title"] = "alpha" },
+                    new Dictionary<string, object?> { ["title"] = "beta" },
+                    new Dictionary<string, object?> { ["title"] = "gamma" }
+                }
+            }
+        });
+
+        Assert.Equal("gamma\nbeta\nalpha", string.Join('\n', output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)));
+    }
+
+    [Fact]
     public void RelativeAbsoluteAndMarkdownifyFilters_RenderExpectedOutput()
     {
         const string template = """

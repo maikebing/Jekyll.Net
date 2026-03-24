@@ -1933,8 +1933,21 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
 
     private static bool CanPaginate(JekyllContentItem item)
         => !item.IsPost
+           && !IsPaginationDisabled(item.FrontMatter)
            && (item.RelativePath.EndsWith("/index.html", StringComparison.OrdinalIgnoreCase)
                || string.Equals(item.RelativePath, "index.html", StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsPaginationDisabled(IReadOnlyDictionary<string, object?> frontMatter)
+    {
+        if (frontMatter.TryGetValue("pagination", out var paginationValue)
+            && paginationValue is bool paginationEnabled)
+        {
+            return !paginationEnabled;
+        }
+
+        return TryResolveObject(frontMatter, "pagination.enabled", out var enabledValue)
+            && TryConvertToBoolean(enabledValue) is false;
+    }
 
     private static bool ShouldIncludeInPagination(JekyllContentItem item)
     {
@@ -1949,7 +1962,17 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
             return pageSize;
         }
 
+        if (TryResolveObject(item.FrontMatter, "pagination.per_page", out var pagePerPageValue) && TryConvertToInt(pagePerPageValue, out pageSize))
+        {
+            return pageSize;
+        }
+
         if (siteConfig.TryGetValue("paginate", out var sitePaginateValue) && TryConvertToInt(sitePaginateValue, out pageSize))
+        {
+            return pageSize;
+        }
+
+        if (TryResolveObject(siteConfig, "pagination.per_page", out var configPerPageValue) && TryConvertToInt(configPerPageValue, out pageSize))
         {
             return pageSize;
         }
@@ -1981,6 +2004,15 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
             : siteConfig.TryGetValue("paginate_path", out var configPathValue)
                 ? configPathValue?.ToString()
                 : null;
+
+        paginatePath ??= ReadStringValue(item.FrontMatter, "pagination_path");
+        paginatePath ??= TryResolveObject(item.FrontMatter, "pagination.path", out var nestedPagePathValue)
+            ? nestedPagePathValue?.ToString()
+            : null;
+        paginatePath ??= TryResolveObject(item.FrontMatter, "pagination.permalink", out var nestedPagePermalinkValue)
+            ? nestedPagePermalinkValue?.ToString()
+            : null;
+        paginatePath ??= ReadConfigString(siteConfig, "pagination.path", "pagination.permalink");
 
         if (string.IsNullOrWhiteSpace(paginatePath))
         {
