@@ -1504,7 +1504,7 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
     private static string ResolveConfiguredUrl(string url, IReadOnlyDictionary<string, object?> siteConfig)
     {
         if (string.IsNullOrWhiteSpace(url)
-            || Uri.TryCreate(url, UriKind.Absolute, out _)
+            || IsAbsoluteUrl(url)
             || url.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase)
             || url.StartsWith('#'))
         {
@@ -1579,6 +1579,9 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
 
         return value.StartsWith('/') ? value : "/" + value;
     }
+
+    private static bool IsAbsoluteUrl(string value)
+        => Uri.TryCreate(value, UriKind.Absolute, out var uri) && !uri.IsFile;
 
     private void PrepareContentItems(IEnumerable<JekyllContentItem> items, MarkdownPipeline markdownPipeline, IReadOnlyDictionary<string, object?> siteConfig)
     {

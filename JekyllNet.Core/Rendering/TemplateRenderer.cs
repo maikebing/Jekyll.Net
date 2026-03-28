@@ -795,7 +795,7 @@ public sealed partial class TemplateRenderer
             return string.Empty;
         }
 
-        if (Uri.TryCreate(path, UriKind.Absolute, out _))
+        if (IsAbsoluteUrl(path))
         {
             return path;
         }
@@ -815,7 +815,7 @@ public sealed partial class TemplateRenderer
             return string.Empty;
         }
 
-        if (Uri.TryCreate(path, UriKind.Absolute, out _))
+        if (IsAbsoluteUrl(path))
         {
             return path;
         }
@@ -943,6 +943,9 @@ public sealed partial class TemplateRenderer
 
         return value.StartsWith('/') ? value : "/" + value;
     }
+
+    private static bool IsAbsoluteUrl(string value)
+        => Uri.TryCreate(value, UriKind.Absolute, out var uri) && !uri.IsFile;
 
     private static object? ResolveSingleArgument(string? argument, IReadOnlyDictionary<string, object?> variables)
         => ParseFilterArguments(argument, variables).FirstOrDefault();
