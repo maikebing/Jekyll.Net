@@ -1,6 +1,6 @@
 name: JekyllNet Build
 description: Build a Jekyll-style static site with JekyllNet and optionally upload the generated output as a workflow artifact.
-author: IoTSharp
+author: JekyllNet
 
 inputs:
   source:
@@ -31,6 +31,10 @@ inputs:
     description: .NET SDK version to install when setup-dotnet is enabled.
     required: false
     default: 10.0.x
+  dotnet-configuration:
+    description: Build configuration used when invoking dotnet run for the JekyllNet CLI project.
+    required: false
+    default: Release
   setup-dotnet:
     description: Install the configured .NET SDK before running JekyllNet.
     required: false
@@ -65,6 +69,7 @@ runs:
         args=(
           run
           --project "${{ github.action_path }}/JekyllNet.Cli/JekyllNet.Cli.csproj"
+          --configuration "${{ inputs.dotnet-configuration }}"
           --
           build
           --source "${{ inputs.source }}"

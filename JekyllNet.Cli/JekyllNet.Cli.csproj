@@ -16,14 +16,14 @@
     <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>jekyllnet</ToolCommandName>
-    <PackageId>JekyllNet.Tool</PackageId>
+    <PackageId>JekyllNet</PackageId>
     <Version>0.1.0</Version>
-    <Authors>IoTSharp</Authors>
+    <Authors>JekyllNet</Authors>
     <Description>Jekyll-style static site generator and local docs server for .NET.</Description>
     <PackageTags>jekyll;github-pages;static-site-generator;dotnet-tool</PackageTags>
-    <RepositoryUrl>https://github.com/IoTSharp/Jekyll.Net</RepositoryUrl>
+    <RepositoryUrl>https://github.com/JekyllNet/JekyllNet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/IoTSharp/Jekyll.Net</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/JekyllNet/JekyllNet</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageOutputPath>..\artifacts\nupkg</PackageOutputPath>
   </PropertyGroup>

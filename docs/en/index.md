@@ -12,7 +12,7 @@ hero:
   primary_label: "Open the docs map"
   primary_url: /en/navigation/
   secondary_label: "Browse sample-site"
-  secondary_url: https://github.com/IoTSharp/Jekyll.Net/tree/main/sample-site
+  secondary_url: https://github.com/JekyllNet/JekyllNet/tree/main/sample-site
   tertiary_label: "Read launch news"
   tertiary_url: /en/news/project-status/
   tags:

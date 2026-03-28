@@ -1,4 +1,4 @@
-PackageIdentifier: IoTSharp.JekyllNet
+PackageIdentifier: JekyllNet.JekyllNet
 PackageVersion: __VERSION__
 InstallerType: zip
 NestedInstallerType: portable

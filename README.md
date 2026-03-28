@@ -96,15 +96,15 @@ GitHub 头像建议使用：
 
 从本地包目录全局安装：
 
-`dotnet tool install --global JekyllNet.Tool --add-source .\artifacts\nupkg`
+`dotnet tool install --global JekyllNet --add-source .\artifacts\nupkg`
 
 升级：
 
-`dotnet tool update --global JekyllNet.Tool --add-source .\artifacts\nupkg`
+`dotnet tool update --global JekyllNet --add-source .\artifacts\nupkg`
 
 卸载：
 
-`dotnet tool uninstall --global JekyllNet.Tool`
+`dotnet tool uninstall --global JekyllNet`
 
 安装后可直接执行：
 
@@ -125,7 +125,7 @@ GitHub 头像建议使用：
 - ⚙️ `action.yml`：在任意仓库中构建 JekyllNet 站点，并可选上传构建产物
 - ⚙️ `ci.yml`：测试、通过 action 构建 `docs` / `sample-site`、打包 dotnet tool
 - ⚙️ `github-pages.yml`：当 `docs` 或站点生成器相关代码变化时，构建 `docs` 并发布到 GitHub Pages
-- ⚙️ `publish-dotnet-tool.yml`：将 `JekyllNet.Tool` 作为 dotnet tool 包发布到 NuGet
+- ⚙️ `publish-dotnet-tool.yml`：将 `JekyllNet` 作为 dotnet tool 包发布到 NuGet
 - ⚙️ `release-artifacts.yml`：生成 `nupkg` 与 Windows portable zip，便于 Release 和 `winget`
 
 最小 workflow 示例：
@@ -146,7 +146,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build docs with JekyllNet
-        uses: IoTSharp/JekyllNet@main
+        uses: JekyllNet/JekyllNet@main
         with:
           source: ./docs
           destination: ./artifacts/docs-site
@@ -174,6 +174,7 @@ jobs:
 - `future`
 - `unpublished`
 - `posts-per-page`
+- `dotnet-configuration`
 - `upload-artifact`
 - `artifact-name`
 
@@ -193,7 +194,7 @@ jobs:
 示例：
 
 - 推送 tag `v0.1.1`
-- workflow 会把 `JekyllNet.Tool` `0.1.1` 同时发布到 NuGet.org 和 `https://nuget.pkg.github.com/<owner>/index.json`
+- workflow 会把 `JekyllNet` `0.1.1` 同时发布到 NuGet.org 和 `https://nuget.pkg.github.com/JekyllNet/index.json`
 
 ## 🪄 winget
 

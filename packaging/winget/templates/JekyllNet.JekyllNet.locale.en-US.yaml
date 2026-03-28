@@ -1,11 +1,11 @@
-PackageIdentifier: IoTSharp.JekyllNet
+PackageIdentifier: JekyllNet.JekyllNet
 PackageVersion: __VERSION__
 PackageLocale: en-US
-Publisher: IoTSharp
-PublisherUrl: https://github.com/IoTSharp/Jekyll.Net
-PublisherSupportUrl: https://github.com/IoTSharp/Jekyll.Net/issues
-PackageName: Jekyll.Net
-PackageUrl: https://github.com/IoTSharp/Jekyll.Net
+Publisher: JekyllNet
+PublisherUrl: https://github.com/JekyllNet/JekyllNet
+PublisherSupportUrl: https://github.com/JekyllNet/JekyllNet/issues
+PackageName: JekyllNet
+PackageUrl: https://github.com/JekyllNet/JekyllNet
 ShortDescription: Jekyll-style static site generator and local development server for .NET.
 Tags:
   - dotnet

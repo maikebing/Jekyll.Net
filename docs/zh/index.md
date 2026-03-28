@@ -12,7 +12,7 @@ hero:
   primary_label: "览文档导航"
   primary_url: /zh/navigation/
   secondary_label: "观 sample-site"
-  secondary_url: https://github.com/IoTSharp/Jekyll.Net/tree/main/sample-site
+  secondary_url: https://github.com/JekyllNet/JekyllNet/tree/main/sample-site
   tertiary_label: "读首发新闻"
   tertiary_url: /zh/news/project-status/
   tags:

@@ -193,13 +193,13 @@ public sealed class TemplateRendererTests
         {
             ["site"] = new Dictionary<string, object?>
             {
-                ["baseurl"] = "/Jekyll.Net",
+                ["baseurl"] = "/JekyllNet",
                 ["url"] = "https://example.com"
             }
         });
 
-        Assert.Contains("/Jekyll.Net/docs/", output, StringComparison.Ordinal);
-        Assert.Contains("https://example.com/Jekyll.Net/docs/", output, StringComparison.Ordinal);
+        Assert.Contains("/JekyllNet/docs/", output, StringComparison.Ordinal);
+        Assert.Contains("https://example.com/JekyllNet/docs/", output, StringComparison.Ordinal);
         Assert.Contains("<h1", output, StringComparison.Ordinal);
         Assert.Contains("Heading</h1>", output, StringComparison.Ordinal);
     }
@@ -216,13 +216,13 @@ public sealed class TemplateRendererTests
         {
             ["Site"] = new Dictionary<string, object?>
             {
-                ["BaseUrl"] = "/Jekyll.Net",
+                ["BaseUrl"] = "/JekyllNet",
                 ["Url"] = "https://example.com"
             }
         });
 
-        Assert.Contains("/Jekyll.Net/docs/", output, StringComparison.Ordinal);
-        Assert.Contains("https://example.com/Jekyll.Net/docs/", output, StringComparison.Ordinal);
+        Assert.Contains("/JekyllNet/docs/", output, StringComparison.Ordinal);
+        Assert.Contains("https://example.com/JekyllNet/docs/", output, StringComparison.Ordinal);
     }
 
     [Fact]

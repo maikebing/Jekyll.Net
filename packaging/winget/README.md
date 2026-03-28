@@ -1,6 +1,6 @@
 # winget Packaging Notes
 
-`Jekyll.Net` 在仓库里已经准备好了 `winget` 提交模板，但真正提交到社区源之前，还需要一个已发布的 Windows 可下载资产。
+`JekyllNet` 在仓库里已经准备好了 `winget` 提交模板，但真正提交到社区源之前，还需要一个已发布的 Windows 可下载资产。
 
 推荐的发布物：
 
@@ -10,9 +10,9 @@
 仓库里现成可用的辅助内容：
 
 - `.github/workflows/release-artifacts.yml`
-- `packaging/winget/templates/IoTSharp.JekyllNet.yaml`
-- `packaging/winget/templates/IoTSharp.JekyllNet.installer.yaml`
-- `packaging/winget/templates/IoTSharp.JekyllNet.locale.en-US.yaml`
+- `packaging/winget/templates/JekyllNet.JekyllNet.yaml`
+- `packaging/winget/templates/JekyllNet.JekyllNet.installer.yaml`
+- `packaging/winget/templates/JekyllNet.JekyllNet.locale.en-US.yaml`
 
 ## 建议流程
 

@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: IoTSharp/JekyllNet@main
+      - uses: JekyllNet/JekyllNet@main
         with:
           source: ./docs
           destination: ./artifacts/docs-site

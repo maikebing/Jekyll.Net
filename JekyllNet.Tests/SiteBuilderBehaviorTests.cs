@@ -853,7 +853,7 @@ public sealed class SiteBuilderBehaviorTests
                 terms:
                   GitHub Pages:
                     fr: Pages GitHub
-                  Jekyll.Net: Jekyll.Net
+                  JekyllNet: JekyllNet
                 """,
             ["index.md"] = """
                 ---
@@ -861,7 +861,7 @@ public sealed class SiteBuilderBehaviorTests
                 title: GitHub Pages
                 lang: en
                 ---
-                Jekyll.Net works with GitHub Pages.
+                JekyllNet works with GitHub Pages.
                 """
         });
 
@@ -874,7 +874,7 @@ public sealed class SiteBuilderBehaviorTests
             request => request.TargetLanguage == "fr"
                 && request.GlossaryEntries is { Count: 2 }
                 && request.GlossaryEntries.Any(entry => entry.Source == "GitHub Pages" && entry.Target == "Pages GitHub")
-                && request.GlossaryEntries.Any(entry => entry.Source == "Jekyll.Net" && entry.Target == "Jekyll.Net"));
+                && request.GlossaryEntries.Any(entry => entry.Source == "JekyllNet" && entry.Target == "JekyllNet"));
     }
 
     [Fact]

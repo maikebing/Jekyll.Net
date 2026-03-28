@@ -45,11 +45,11 @@ sections:
     items:
       - title: "GitHub 仓库"
         description: "观源码、议题、提交与发布流转。"
-        url: https://github.com/IoTSharp/Jekyll.Net
+        url: https://github.com/JekyllNet/JekyllNet
       - title: "README"
         description: "自仓库首页，速知其能力与装用之法。"
-        url: https://github.com/IoTSharp/Jekyll.Net/blob/main/README.md
+        url: https://github.com/JekyllNet/JekyllNet/blob/main/README.md
       - title: "sample-site"
         description: "观内置示例站之目录与内容组织。"
-        url: https://github.com/IoTSharp/Jekyll.Net/tree/main/sample-site
+        url: https://github.com/JekyllNet/JekyllNet/tree/main/sample-site
 ---

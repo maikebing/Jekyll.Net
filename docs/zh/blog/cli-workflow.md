@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: IoTSharp/JekyllNet@main
+      - uses: JekyllNet/JekyllNet@main
         with:
           source: ./docs
           destination: ./artifacts/docs-site
@@ -52,11 +52,11 @@ jobs:
 
 今仓库尚未另发 action 版本 tag，故示例暂用 `@main`；待首个 action release 既成，宜改钉其固定 tag。
 
-常用输入者，有 `source`、`destination`、`drafts`、`future`、`unpublished`、`posts-per-page`，以及可选之 artifact 上传配置。
+常用输入者，有 `source`、`destination`、`drafts`、`future`、`unpublished`、`posts-per-page`、`dotnet-configuration`，以及可选之 artifact 上传配置。
 
 ## NuGet 发布工作流
 
-仓库今亦已具 `.github/workflows/publish-dotnet-tool.yml`，可将 CLI 以 `JekyllNet.Tool` 之 dotnet tool 包同时发布到 NuGet.org 与 GitHub Packages。
+仓库今亦已具 `.github/workflows/publish-dotnet-tool.yml`，可将 CLI 以 `JekyllNet` 之 dotnet tool 包同时发布到 NuGet.org 与 GitHub Packages。
 
 其所行者：
 
@@ -65,7 +65,7 @@ jobs:
 - 先行 `dotnet test`
 - 再以解析后之版本执行 `dotnet pack`，不专赖项目文件中之固定版本字样
 - 以仓库 secret `NUGET_API_KEY` 推送至 NuGet.org
-- 并以 `GITHUB_TOKEN` 推送至 `https://nuget.pkg.github.com/<owner>/index.json`
+- 并以 `GITHUB_TOKEN` 推送至 `https://nuget.pkg.github.com/JekyllNet/index.json`
 
 ## 一条实用之例行
 

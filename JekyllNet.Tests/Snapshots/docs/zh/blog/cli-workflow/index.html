@@ -47,9 +47,9 @@
       <details class="nav-menu">
         <summary>源码</summary>
         <div class="nav-menu-panel">
-          <a href="https://github.com/IoTSharp/Jekyll.Net" target="_blank" rel="noreferrer">GitHub</a>
-          <a href="https://github.com/IoTSharp/Jekyll.Net/blob/main/README.md" target="_blank" rel="noreferrer">README</a>
-          <a href="https://github.com/IoTSharp/Jekyll.Net/tree/main/sample-site" target="_blank" rel="noreferrer">sample-site</a>
+          <a href="https://github.com/JekyllNet/JekyllNet" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/JekyllNet/JekyllNet/blob/main/README.md" target="_blank" rel="noreferrer">README</a>
+          <a href="https://github.com/JekyllNet/JekyllNet/tree/main/sample-site" target="_blank" rel="noreferrer">sample-site</a>
         </div>
       </details>
 
@@ -105,7 +105,7 @@ dotnet run --project .\JekyllNet.Cli -- serve --source .\docs --port 5055
 
     steps:
       - uses: actions/checkout@v4
-      - uses: IoTSharp/JekyllNet@main
+      - uses: JekyllNet/JekyllNet@main
         with:
           source: ./docs
           destination: ./artifacts/docs-site
@@ -113,9 +113,9 @@ dotnet run --project .\JekyllNet.Cli -- serve --source .\docs --port 5055
           artifact-name: docs-site
 </code></pre>
 <p>今仓库尚未另发 action 版本 tag，故示例暂用 <code>@main</code>；待首个 action release 既成，宜改钉其固定 tag。</p>
-<p>常用输入者，有 <code>source</code>、<code>destination</code>、<code>drafts</code>、<code>future</code>、<code>unpublished</code>、<code>posts-per-page</code>，以及可选之 artifact 上传配置。</p>
+<p>常用输入者，有 <code>source</code>、<code>destination</code>、<code>drafts</code>、<code>future</code>、<code>unpublished</code>、<code>posts-per-page</code>、<code>dotnet-configuration</code>，以及可选之 artifact 上传配置。</p>
 <h2 id="nuget">NuGet 发布工作流</h2>
-<p>仓库今亦已具 <code>.github/workflows/publish-dotnet-tool.yml</code>，可将 CLI 以 <code>JekyllNet.Tool</code> 之 dotnet tool 包同时发布到 NuGet.org 与 GitHub Packages。</p>
+<p>仓库今亦已具 <code>.github/workflows/publish-dotnet-tool.yml</code>，可将 CLI 以 <code>JekyllNet</code> 之 dotnet tool 包同时发布到 NuGet.org 与 GitHub Packages。</p>
 <p>其所行者：</p>
 <ul>
 <li>于 <code>v*</code> tag 触发</li>
@@ -123,7 +123,7 @@ dotnet run --project .\JekyllNet.Cli -- serve --source .\docs --port 5055
 <li>先行 <code>dotnet test</code></li>
 <li>再以解析后之版本执行 <code>dotnet pack</code>，不专赖项目文件中之固定版本字样</li>
 <li>以仓库 secret <code>NUGET_API_KEY</code> 推送至 NuGet.org</li>
-<li>并以 <code>GITHUB_TOKEN</code> 推送至 <code>https://nuget.pkg.github.com/&lt;owner&gt;/index.json</code></li>
+<li>并以 <code>GITHUB_TOKEN</code> 推送至 <code>https://nuget.pkg.github.com/JekyllNet/index.json</code></li>
 </ul>
 <h2 id="section-2">一条实用之例行</h2>
 <ol>
@@ -158,9 +158,9 @@ dotnet run --project .\JekyllNet.Cli -- serve --source .\docs --port 5055
     <section>
       <h2>项目</h2>
       <ul>
-        <li><a href="https://github.com/IoTSharp/Jekyll.Net">GitHub</a></li>
-        <li><a href="https://github.com/IoTSharp/Jekyll.Net/blob/main/README.md">README</a></li>
-        <li><a href="https://github.com/IoTSharp/Jekyll.Net/tree/main/sample-site">sample-site</a></li>
+        <li><a href="https://github.com/JekyllNet/JekyllNet">GitHub</a></li>
+        <li><a href="https://github.com/JekyllNet/JekyllNet/blob/main/README.md">README</a></li>
+        <li><a href="https://github.com/JekyllNet/JekyllNet/tree/main/sample-site">sample-site</a></li>
       </ul>
     </section>
   </div>
