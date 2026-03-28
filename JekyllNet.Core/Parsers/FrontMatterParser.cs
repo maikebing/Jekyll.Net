@@ -51,6 +51,7 @@ public sealed class FrontMatterParser
 
         return new FrontMatterDocument
         {
+            HasFrontMatter = true,
             FrontMatter = Normalize(parsed),
             Content = body.TrimStart('\r', '\n')
         };

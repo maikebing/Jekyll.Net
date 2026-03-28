@@ -1539,14 +1539,14 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
                 "Report Email",
                 ":")
             : new FooterLabels(
-                "å¤‡æ¡ˆå·",
-                "å…¬å®‰å¤‡æ¡ˆå·",
-                "å¢žå€¼ç”µä¿¡ä¸šåŠ¡ç»è¥è®¸å¯è¯",
-                "æœåŠ¡æ¡æ¬¾",
-                "éšç§æ”¿ç­–",
-                "è¿æ³•å’Œä¸è‰¯ä¸¾æŠ¥ç”µè¯",
-                "ä¸¾æŠ¥é‚®ç®±",
-                "ï¼š");
+                "±¸°¸ºÅ",
+                "¹«°²±¸°¸ºÅ",
+                "ÔöÖµµçÐÅÒµÎñ¾­ÓªÐí¿ÉÖ¤",
+                "·þÎñÌõ¿î",
+                "ÒþË½Õþ²ß",
+                "Î¥·¨ºÍ²»Á¼¾Ù±¨µç»°",
+                "¾Ù±¨ÓÊÏä",
+                "£º");
     }
 
     private static string ResolvePageLanguage(
@@ -1803,7 +1803,7 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
                 {
                     var text = await File.ReadAllTextAsync(file, cancellationToken);
                     var document = _frontMatterParser.Parse(text);
-                    hasFrontMatter = document.FrontMatter.Count > 0;
+                    hasFrontMatter = document.HasFrontMatter;
                     content = hasFrontMatter ? document.Content : text;
                     frontMatter = ApplyFrontMatterDefaults(relativePath, document.FrontMatter, siteConfig, collectionDefinitions, options);
                 }
@@ -1931,10 +1931,32 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
             {
                 var relative = Path.GetRelativePath(rootDirectory, file).Replace('\\', '/');
                 var fileName = Path.GetFileName(relative);
-                return !fileName.StartsWith("_", StringComparison.Ordinal) && !ShouldSkip(relative, siteConfig, options);
+                return !fileName.StartsWith("_", StringComparison.Ordinal)
+                    && !ShouldSkip(relative, siteConfig, options)
+                    && HasFrontMatter(file);
             });
     }
 
+    private static bool HasFrontMatter(string path)
+    {
+        using var reader = new StreamReader(path);
+        var firstLine = reader.ReadLine();
+        if (!string.Equals(firstLine, "---", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string? line;
+        while ((line = reader.ReadLine()) is not null)
+        {
+            if (string.Equals(line, "---", StringComparison.Ordinal) || string.Equals(line, "...", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     private static bool ShouldSkipStaticFile(string relativePath, HashSet<string> collectionDefinitions, JekyllSiteOptions options)
     {
         var normalized = relativePath.Replace('\\', '/').TrimStart('/');
@@ -2141,7 +2163,7 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
         {
             var source = await File.ReadAllTextAsync(sourcePath, cancellationToken);
             var document = _frontMatterParser.Parse(source);
-            if (document.FrontMatter.Count == 0)
+            if (!document.HasFrontMatter)
             {
                 return source;
             }

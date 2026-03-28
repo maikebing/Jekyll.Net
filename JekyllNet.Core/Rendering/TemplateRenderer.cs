@@ -37,9 +37,12 @@ public sealed partial class TemplateRenderer
                 break;
             }
 
-            output.Append(template[index..nextStart]);
+            var isVariable = nextStart == variableStart;
+            var trimLeft = nextStart + 2 < template.Length && template[nextStart + 2] == '-';
+            var leadingText = template[index..nextStart];
+            output.Append(trimLeft ? TrimTrailingWhitespace(leadingText) : leadingText);
 
-            if (nextStart == variableStart)
+            if (isVariable)
             {
                 var variableEnd = template.IndexOf("}}", variableStart + 2, StringComparison.Ordinal);
                 if (variableEnd < 0)
@@ -48,9 +51,12 @@ public sealed partial class TemplateRenderer
                     break;
                 }
 
-                var expression = NormalizeLiquidMarkup(template[(variableStart + 2)..variableEnd]);
+                var trimRight = variableEnd > variableStart + 2 && template[variableEnd - 1] == '-';
+                var expressionStart = variableStart + (trimLeft ? 3 : 2);
+                var expressionEnd = trimRight ? variableEnd - 1 : variableEnd;
+                var expression = NormalizeLiquidMarkup(template[expressionStart..expressionEnd]);
                 output.Append(ResolveExpression(expression, scope)?.ToString() ?? string.Empty);
-                index = variableEnd + 2;
+                index = trimRight ? SkipLeadingWhitespace(template, variableEnd + 2) : variableEnd + 2;
                 continue;
             }
 
@@ -61,9 +67,12 @@ public sealed partial class TemplateRenderer
                 break;
             }
 
-            var tagContent = NormalizeLiquidMarkup(template[(tagStart + 2)..tagEnd]);
+            var trimRight = tagEnd > tagStart + 2 && template[tagEnd - 1] == '-';
+            var tagContentStart = tagStart + (trimLeft ? 3 : 2);
+            var tagContentEnd = trimRight ? tagEnd - 1 : tagEnd;
+            var tagContent = NormalizeLiquidMarkup(template[tagContentStart..tagContentEnd]);
             var tagName = GetTagName(tagContent);
-            index = tagEnd + 2;
+            index = trimRight ? SkipLeadingWhitespace(template, tagEnd + 2) : tagEnd + 2;
 
             switch (tagName)
             {
@@ -627,7 +636,8 @@ public sealed partial class TemplateRenderer
 
     private static object? ResolveBase(string expression, IReadOnlyDictionary<string, object?> variables)
     {
-        if ((expression.StartsWith('"') && expression.EndsWith('"')) || (expression.StartsWith('\'') && expression.EndsWith('\'')))
+        if (expression.Length >= 2
+            && ((expression.StartsWith('"') && expression.EndsWith('"')) || (expression.StartsWith('\'') && expression.EndsWith('\''))))
         {
             return expression[1..^1];
         }
@@ -1386,6 +1396,27 @@ public sealed partial class TemplateRenderer
         }
 
         return Math.Min(variableStart, tagStart);
+    }
+
+    private static int SkipLeadingWhitespace(string template, int index)
+    {
+        while (index < template.Length && char.IsWhiteSpace(template[index]))
+        {
+            index++;
+        }
+
+        return index;
+    }
+
+    private static string TrimTrailingWhitespace(string text)
+    {
+        var end = text.Length;
+        while (end > 0 && char.IsWhiteSpace(text[end - 1]))
+        {
+            end--;
+        }
+
+        return end == text.Length ? text : text[..end];
     }
 
     [System.Text.RegularExpressions.GeneratedRegex("(\\w+)\\s*=\\s*(\".*?\"|'.*?'|[^\\s]+)", System.Text.RegularExpressions.RegexOptions.Compiled)]
