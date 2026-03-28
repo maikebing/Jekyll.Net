@@ -2204,14 +2204,7 @@ _czc.push(["_setAccount", "{{escapedId}}"]);
                 continue;
             }
 
-            lines[i] = Regex.Replace(lines[i], "(['\"])\\./([^'\"]+)\\1", match =>
-            {
-                var importPath = match.Groups[2].Value;
-                return CanResolveSassImportFromCurrentFile(sourcePath, importPath)
-                    || !CanResolveSassImportFromIncludePaths(importPath, includePaths)
-                    ? match.Value
-                    : $"{match.Groups[1].Value}{importPath}{match.Groups[1].Value}";
-            });
+            lines[i] = Regex.Replace(lines[i], "(['\"])\\./([^'\"]+)\\1", "$1$2$1");
         }
 
         return string.Join(newline, lines);

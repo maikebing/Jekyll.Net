@@ -128,6 +128,15 @@ public sealed class TemplateRendererTests
     }
 
     [Fact]
+    public void InlineWhitespaceControl_RemovesPaddingAroundConditionalBlocks()
+    {
+        const string template = "@use 'main{%- if false -%}.bundle{%- endif -%}';";
+
+        var output = _renderer.Render(template, new Dictionary<string, object?>());
+
+        Assert.Equal("@use 'main';", output);
+    }
+    [Fact]
     public void ForLoop_SupportsLimitOffsetAndMetadata()
     {
         const string template = """

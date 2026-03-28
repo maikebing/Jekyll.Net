@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,16 +35,19 @@ internal static class CliRuntime
     public static async Task BuildOnceAsync(BuildCommandSettings settings, TextWriter output, CancellationToken cancellationToken)
     {
         var builder = new JekyllSiteBuilder();
+        var stopwatch = Stopwatch.StartNew();
         try
         {
             await output.WriteLineAsync($"JekyllNet {GetProductVersion()} | docs: {DocumentationUrl} | repo: {RepositoryUrl}");
             await builder.BuildAsync(ToSiteOptions(settings, output), cancellationToken);
             await WriteGitHubOutputAsync(settings, cancellationToken);
-            await output.WriteLineAsync($"Build complete: {settings.DestinationDirectory}");
+            stopwatch.Stop();
+            await output.WriteLineAsync($"Build complete: {settings.DestinationDirectory} (elapsed {stopwatch.Elapsed:hh\\:mm\\:ss\\.fff})");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            await output.WriteLineAsync($"Build failed: {ex.Message}");
+            stopwatch.Stop();
+            await output.WriteLineAsync($"Build failed after {stopwatch.Elapsed:hh\\:mm\\:ss\\.fff}: {ex.Message}");
             throw;
         }
     }

@@ -51,12 +51,12 @@ public sealed partial class TemplateRenderer
                     break;
                 }
 
-                var trimRight = variableEnd > variableStart + 2 && template[variableEnd - 1] == '-';
+                var trimVariableRight = variableEnd > variableStart + 2 && template[variableEnd - 1] == '-';
                 var expressionStart = variableStart + (trimLeft ? 3 : 2);
-                var expressionEnd = trimRight ? variableEnd - 1 : variableEnd;
+                var expressionEnd = trimVariableRight ? variableEnd - 1 : variableEnd;
                 var expression = NormalizeLiquidMarkup(template[expressionStart..expressionEnd]);
                 output.Append(ResolveExpression(expression, scope)?.ToString() ?? string.Empty);
-                index = trimRight ? SkipLeadingWhitespace(template, variableEnd + 2) : variableEnd + 2;
+                index = trimVariableRight ? SkipLeadingWhitespace(template, variableEnd + 2) : variableEnd + 2;
                 continue;
             }
 
@@ -67,12 +67,12 @@ public sealed partial class TemplateRenderer
                 break;
             }
 
-            var trimRight = tagEnd > tagStart + 2 && template[tagEnd - 1] == '-';
+            var trimTagRight = tagEnd > tagStart + 2 && template[tagEnd - 1] == '-';
             var tagContentStart = tagStart + (trimLeft ? 3 : 2);
-            var tagContentEnd = trimRight ? tagEnd - 1 : tagEnd;
+            var tagContentEnd = trimTagRight ? tagEnd - 1 : tagEnd;
             var tagContent = NormalizeLiquidMarkup(template[tagContentStart..tagContentEnd]);
             var tagName = GetTagName(tagContent);
-            index = trimRight ? SkipLeadingWhitespace(template, tagEnd + 2) : tagEnd + 2;
+            index = trimTagRight ? SkipLeadingWhitespace(template, tagEnd + 2) : tagEnd + 2;
 
             switch (tagName)
             {
@@ -302,13 +302,13 @@ public sealed partial class TemplateRenderer
                 if (depth == 0)
                 {
                     body = template[startIndex..tagStart];
-                    return tagEnd + 2;
+                    return AdvancePastTag(template, tagEnd);
                 }
 
                 depth--;
             }
 
-            cursor = tagEnd + 2;
+            cursor = AdvancePastTag(template, tagEnd);
         }
 
         body = template[startIndex..];
@@ -332,13 +332,13 @@ public sealed partial class TemplateRenderer
                 if (depth == 0)
                 {
                     body = template[startIndex..tagStart];
-                    return tagEnd + 2;
+                    return AdvancePastTag(template, tagEnd);
                 }
 
                 depth--;
             }
 
-            cursor = tagEnd + 2;
+            cursor = AdvancePastTag(template, tagEnd);
         }
 
         body = template[startIndex..];
@@ -377,7 +377,7 @@ public sealed partial class TemplateRenderer
                     falseBranch = elseContentStart >= 0
                         ? template[elseContentStart..tagStart]
                         : string.Empty;
-                    return tagEnd + 2;
+                    return AdvancePastTag(template, tagEnd);
                 }
 
                 if (depth > 0)
@@ -388,10 +388,10 @@ public sealed partial class TemplateRenderer
             else if (string.Equals(tagName, "else", StringComparison.OrdinalIgnoreCase) && depth == 0 && elseTagStart < 0)
             {
                 elseTagStart = tagStart;
-                elseContentStart = tagEnd + 2;
+                elseContentStart = AdvancePastTag(template, tagEnd);
             }
 
-            cursor = tagEnd + 2;
+            cursor = AdvancePastTag(template, tagEnd);
         }
 
         trueBranch = template[startIndex..];
@@ -434,7 +434,7 @@ public sealed partial class TemplateRenderer
                         elseBranch = template[elseStart..tagStart];
                     }
 
-                    return tagEnd + 2;
+                    return AdvancePastTag(template, tagEnd);
                 }
 
                 depth--;
@@ -451,7 +451,7 @@ public sealed partial class TemplateRenderer
                 }
 
                 activeWhenExpression = tagContent["when".Length..].Trim();
-                activeContentStart = tagEnd + 2;
+                activeContentStart = AdvancePastTag(template, tagEnd);
                 elseStart = -1;
             }
             else if (depth == 0 && string.Equals(tagName, "else", StringComparison.OrdinalIgnoreCase))
@@ -462,10 +462,10 @@ public sealed partial class TemplateRenderer
                     activeWhenExpression = string.Empty;
                 }
 
-                elseStart = tagEnd + 2;
+                elseStart = AdvancePastTag(template, tagEnd);
             }
 
-            cursor = tagEnd + 2;
+            cursor = AdvancePastTag(template, tagEnd);
         }
 
         if (!string.IsNullOrWhiteSpace(activeWhenExpression))
@@ -1406,6 +1406,14 @@ public sealed partial class TemplateRenderer
         }
 
         return index;
+    }
+
+    private static int AdvancePastTag(string template, int tagEnd)
+    {
+        var index = tagEnd + 2;
+        return tagEnd > 0 && template[tagEnd - 1] == '-'
+            ? SkipLeadingWhitespace(template, index)
+            : index;
     }
 
     private static string TrimTrailingWhitespace(string text)

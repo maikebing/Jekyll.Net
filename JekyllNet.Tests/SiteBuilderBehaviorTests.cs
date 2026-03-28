@@ -606,6 +606,46 @@ public sealed class SiteBuilderBehaviorTests
     }
 
     [Fact]
+    public async Task Build_CompilesSassEntryFilesWithCommentOnlyFrontMatter()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["assets/css/main.scss"] = """
+                ---
+                # Only the main Sass file needs front matter
+                ---
+
+                body { color: #123456; }
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(sourceDirectory);
+        var output = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "assets", "css", "main.css"));
+
+        Assert.Contains("#123456", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("---", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Build_CompilesSassImportsRenderedFromIncludes()
+    {
+        var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
+        {
+            ["_includes/imports.scss.liquid"] = "@import \"./support/support\";",
+            ["_sass/support/support.scss"] = "body { color: #abcdef; }",
+            ["assets/css/main.scss"] = """
+                ---
+                ---
+                {% include imports.scss.liquid %}
+                """
+        });
+
+        var outputDirectory = await TestInfrastructure.BuildSiteAsync(sourceDirectory);
+        var output = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "assets", "css", "main.css"));
+
+        Assert.Contains("#abcdef", output, StringComparison.Ordinal);
+    }
+    [Fact]
     public async Task Build_InvalidSass_ThrowsWithFileContext()
     {
         var sourceDirectory = TestInfrastructure.CreateSiteFixture(new Dictionary<string, string>
@@ -667,8 +707,8 @@ public sealed class SiteBuilderBehaviorTests
             aiTranslationClient: new FakeAiTranslationClient());
         var translatedOutput = await File.ReadAllTextAsync(Path.Combine(outputDirectory, "fr", "index.html"));
 
-        Assert.Contains("<h1>fr::欢迎</h1>", translatedOutput, StringComparison.Ordinal);
-        Assert.Contains("fr::你好，世界。", translatedOutput, StringComparison.Ordinal);
+        Assert.Contains("<h1>fr::娆㈣繋</h1>", translatedOutput, StringComparison.Ordinal);
+        Assert.Contains("fr::浣犲ソ锛屼笘鐣屻€?, translatedOutput, StringComparison.Ordinal);
         Assert.Contains("fr::Terms of Service", translatedOutput, StringComparison.Ordinal);
         Assert.Contains("fr::Privacy Policy", translatedOutput, StringComparison.Ordinal);
         Assert.Contains("fr::Report Email", translatedOutput, StringComparison.Ordinal);
