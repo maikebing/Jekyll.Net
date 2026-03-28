@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const fs=require\\(''''fs''''\\);const {createCanvas}=require\\(''''canvas''''\\);\")",
+      "Bash(npx sharp-cli:*)",
+      "Bash(magick --version)",
+      "Bash(inkscape --version)",
+      "Bash(rsvg-convert --version)",
+      "Bash(python3 -c \"import cairosvg\")",
+      "Bash(git submodule:*)",
+      "Bash(git rm:*)",
+      "Bash(rm -rf Profile .git/modules/Profile)",
+      "Bash(git clone:*)"
+    ]
+  }
+}

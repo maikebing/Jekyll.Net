@@ -126,7 +126,7 @@ GitHub 头像建议使用：
 - ⚙️ `ci.yml`：测试、通过 action 构建 `docs` / `sample-site`、打包 dotnet tool
 - ⚙️ `github-pages.yml`：当 `docs` 或站点生成器相关代码变化时，构建 `docs` 并发布到 GitHub Pages
 - ⚙️ `publish-dotnet-tool.yml`：将 `JekyllNet` 作为 dotnet tool 包发布到 NuGet
-- ⚙️ `release-artifacts.yml`：生成 `nupkg` 与 Windows portable zip，便于 Release 和 `winget`
+- ⚙️ `release-artifacts.yml`：生成 `nupkg`、Windows portable zip、SHA256 与已填充的 `winget` manifests，并在 tag 发布时同步挂到 GitHub Release
 
 最小 workflow 示例：
 
@@ -196,16 +196,38 @@ jobs:
 - 推送 tag `v0.1.1`
 - workflow 会把 `JekyllNet` `0.1.1` 同时发布到 NuGet.org 和 `https://nuget.pkg.github.com/JekyllNet/index.json`
 
+生成 GitHub Release 资产与 `winget` manifests 可直接使用：
+
+- `.github/workflows/release-artifacts.yml`
+
+该 workflow 会：
+
+- 在推送 `v*` tag 时自动触发，也支持手动触发
+- 统一要求 `0.1.1` 这类三段式版本号；若手动触发且未填 `version`，则回退到 `JekyllNet.Cli.csproj` 中的版本
+- 先执行 `dotnet test`
+- 再生成 `nupkg`、`JekyllNet-win-x64.zip` 与 `SHA256SUMS.txt`
+- 基于 `packaging/winget/templates/*` 自动产出可提交的 `winget` manifests
+- 在 tag 触发时，把 zip、checksum、NuGet 包和 `winget` manifests 一并挂到 GitHub Release
+
+示例：
+
+- 推送 tag `v0.1.0`
+- workflow 会创建或更新对应 GitHub Release
+- Release 会附带 `JekyllNet-win-x64.zip`
+- Release 会附带 `SHA256SUMS.txt`
+- Release 会附带 `artifacts/winget/JekyllNet.JekyllNet/0.1.0/*.yaml`
+
 ## 🪄 winget
 
 仓库已补上 `winget` 模板与提交流程说明：
 
 - 📄 `packaging/winget/README.md`
+- 📄 `scripts/Export-WingetManifest.ps1`
 
 当前状态：
 
-- 📦 仓库已经具备 `winget` 清单模板和 Windows portable 发布物流程
-- 📝 真正提交社区源前，还需要把 Release 资产 URL 和 SHA256 填入模板
+- 📦 仓库已经具备 `winget` 清单模板、Windows portable 发布物流程，以及自动填充 manifest 的脚本
+- 📝 真正提交社区源前，还需要把生成出的 manifests 送去 `winget validate` / `wingetcreate validate`，然后提交到社区源
 
 ## 🌍 AI 翻译配置
 

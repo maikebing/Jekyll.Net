@@ -10,18 +10,31 @@
 仓库里现成可用的辅助内容：
 
 - `.github/workflows/release-artifacts.yml`
+- `scripts/Export-WingetManifest.ps1`
 - `packaging/winget/templates/JekyllNet.JekyllNet.yaml`
 - `packaging/winget/templates/JekyllNet.JekyllNet.installer.yaml`
 - `packaging/winget/templates/JekyllNet.JekyllNet.locale.en-US.yaml`
 
 ## 建议流程
 
-1. 用 tag 或手动触发 `release-artifacts` workflow
-2. 上传 `JekyllNet-win-x64.zip` 到 GitHub Release
-3. 计算 zip 的 SHA256
-4. 用真实版本号、下载地址、SHA256 替换模板中的占位符
-5. 用 `winget validate` 或 `wingetcreate validate` 验证
-6. 向 `microsoft/winget-pkgs` 提交 PR
+1. 推送 `vX.Y.Z` tag，或手动触发 `release-artifacts` workflow
+2. workflow 生成 `JekyllNet-win-x64.zip`、`SHA256SUMS.txt` 和 `artifacts/winget/JekyllNet.JekyllNet/<version>/`
+3. 若是 tag 触发，workflow 会把 zip、checksum 和生成后的 manifests 一并挂到 GitHub Release
+4. 用 `winget validate` 或 `wingetcreate validate` 验证生成后的 manifests
+5. 向 `microsoft/winget-pkgs` 提交 PR
+
+## 本地生成 manifest
+
+```powershell
+.\scripts\Export-WingetManifest.ps1 `
+  -Version 0.1.0 `
+  -InstallerUrl https://github.com/JekyllNet/JekyllNet/releases/download/v0.1.0/JekyllNet-win-x64.zip `
+  -ZipPath .\artifacts\JekyllNet-win-x64.zip
+```
+
+默认输出目录：
+
+- `artifacts/winget/JekyllNet.JekyllNet/<version>/`
 
 ## 需要替换的占位符
 
