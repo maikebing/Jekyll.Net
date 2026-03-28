@@ -10,7 +10,7 @@
 仓库里现成可用的辅助内容：
 
 - `.github/workflows/release-artifacts.yml`
-- `scripts/Export-WingetManifest.ps1`
+- `scripts/JekyllNet.ReleaseTool/`
 - `packaging/winget/templates/JekyllNet.JekyllNet.yaml`
 - `packaging/winget/templates/JekyllNet.JekyllNet.installer.yaml`
 - `packaging/winget/templates/JekyllNet.JekyllNet.locale.en-US.yaml`
@@ -26,10 +26,11 @@
 ## 本地生成 manifest
 
 ```powershell
-.\scripts\Export-WingetManifest.ps1 `
-  -Version 0.1.0 `
-  -InstallerUrl https://github.com/JekyllNet/JekyllNet/releases/download/v0.1.0/JekyllNet-win-x64.zip `
-  -ZipPath .\artifacts\JekyllNet-win-x64.zip
+dotnet run --project .\scripts\JekyllNet.ReleaseTool\JekyllNet.ReleaseTool.csproj -- `
+  export-winget-manifest `
+  --version 0.1.0 `
+  --installer-url https://github.com/JekyllNet/JekyllNet/releases/download/v0.1.0/JekyllNet-win-x64.zip `
+  --zip-path .\artifacts\JekyllNet-win-x64.zip
 ```
 
 默认输出目录：

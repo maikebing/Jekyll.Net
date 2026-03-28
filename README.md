@@ -222,7 +222,7 @@ jobs:
 仓库已补上 `winget` 模板与提交流程说明：
 
 - 📄 `packaging/winget/README.md`
-- 📄 `scripts/Export-WingetManifest.ps1`
+- 📄 `scripts/JekyllNet.ReleaseTool/`
 
 当前状态：
 

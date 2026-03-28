@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="JekyllNet.Cli/JekyllNet.Cli.csproj" />
   <Project Path="JekyllNet.Core/JekyllNet.Core.csproj" />
+  <Project Path="scripts/JekyllNet.ReleaseTool/JekyllNet.ReleaseTool.csproj" />
   <Project Path="JekyllNet.Tests/JekyllNet.Tests.csproj" />
 </Solution>

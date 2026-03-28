@@ -33,34 +33,14 @@ jobs:
       - name: Resolve package version
         id: version
         shell: pwsh
-        run: |
-          $version = $null
-          $releaseTag = $null
-
-          if ('${{ github.ref_type }}' -eq 'tag') {
-            $releaseTag = $env:GITHUB_REF_NAME
-            $version = $releaseTag.Substring(1)
-          }
-          elseif (-not [string]::IsNullOrWhiteSpace('${{ github.event.inputs.version }}')) {
-            $version = '${{ github.event.inputs.version }}'
-            $releaseTag = "v$version"
-          }
-          else {
-            [xml]$project = Get-Content ./JekyllNet.Cli/JekyllNet.Cli.csproj
-            $version = $project.Project.PropertyGroup.Version | Select-Object -First 1
-            if ([string]::IsNullOrWhiteSpace($version)) {
-              throw "Could not resolve a package version from the workflow input or JekyllNet.Cli.csproj."
-            }
-
-            $releaseTag = "v$version"
-          }
-
-          if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$') {
-            throw "Package version '$version' is not a valid SemVer-style release version. Use tags such as v0.1.0."
-          }
-
-          "package_version=$version" >> $env:GITHUB_OUTPUT
-          "release_tag=$releaseTag" >> $env:GITHUB_OUTPUT
+        run: >
+          dotnet run --project ./scripts/JekyllNet.ReleaseTool/JekyllNet.ReleaseTool.csproj --
+          resolve-version
+          --project ./JekyllNet.Cli/JekyllNet.Cli.csproj
+          --github-ref-type '${{ github.ref_type }}'
+          --github-ref-name '${{ github.ref_name }}'
+          --input-version '${{ github.event.inputs.version }}'
+          --github-output $env:GITHUB_OUTPUT
 
       - name: Test
         run: dotnet test ./JekyllNet.slnx --configuration Release --no-restore
@@ -103,23 +83,25 @@ jobs:
       - name: Generate release checksums
         id: checksums
         shell: pwsh
-        run: |
-          $zipHash = (Get-FileHash ./artifacts/JekyllNet-win-x64.zip -Algorithm SHA256).Hash.ToUpperInvariant()
-          "$zipHash  JekyllNet-win-x64.zip" | Set-Content ./artifacts/SHA256SUMS.txt -Encoding utf8
-          "windows_x64_zip_sha256=$zipHash" >> $env:GITHUB_OUTPUT
+        run: >
+          dotnet run --project ./scripts/JekyllNet.ReleaseTool/JekyllNet.ReleaseTool.csproj --
+          write-sha256
+          --file ./artifacts/JekyllNet-win-x64.zip
+          --asset-name JekyllNet-win-x64.zip
+          --output ./artifacts/SHA256SUMS.txt
+          --github-output $env:GITHUB_OUTPUT
+          --github-output-key windows_x64_zip_sha256
 
       - name: Generate winget manifests
         id: winget
         shell: pwsh
-        run: |
-          ./scripts/Export-WingetManifest.ps1 `
-            -Version '${{ steps.version.outputs.package_version }}' `
-            -InstallerUrl 'https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.release_tag }}/JekyllNet-win-x64.zip' `
-            -ZipPath './artifacts/JekyllNet-win-x64.zip' `
-            -OutputDirectory './artifacts/winget'
-
-          $manifestDirectory = Resolve-Path "./artifacts/winget/JekyllNet.JekyllNet/${{ steps.version.outputs.package_version }}"
-          "manifest_directory=$($manifestDirectory.Path)" >> $env:GITHUB_OUTPUT
+        run: >
+          dotnet run --project ./scripts/JekyllNet.ReleaseTool/JekyllNet.ReleaseTool.csproj --
+          export-winget-manifest
+          --version '${{ steps.version.outputs.package_version }}'
+          --installer-url 'https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.release_tag }}/JekyllNet-win-x64.zip'
+          --zip-path ./artifacts/JekyllNet-win-x64.zip
+          --output-directory ./artifacts/winget
 
       - name: Publish GitHub Release
         if: github.event_name == 'push'

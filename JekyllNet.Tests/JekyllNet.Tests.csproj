@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\JekyllNet.Cli\JekyllNet.Cli.csproj" />
     <ProjectReference Include="..\JekyllNet.Core\JekyllNet.Core.csproj" />
+    <ProjectReference Include="..\scripts\JekyllNet.ReleaseTool\JekyllNet.ReleaseTool.csproj" />
   </ItemGroup>
 
   <ItemGroup>
