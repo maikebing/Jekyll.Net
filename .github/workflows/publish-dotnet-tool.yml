@@ -8,7 +8,7 @@ on:
     inputs:
       version:
         description: "NuGet package version to publish, for example 0.1.1"
-        required: true
+        required: false
         type: string
 
 permissions:
@@ -34,26 +34,15 @@ jobs:
 
       - name: Resolve package version
         id: version
-        shell: bash
-        run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            version="${GITHUB_REF_NAME#v}"
-          else
-            version="${{ github.event.inputs.version }}"
-          fi
-
-          if [ -z "$version" ]; then
-            echo "::error::Package version could not be determined."
-            exit 1
-          fi
-
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::Package version '$version' is not a valid SemVer-style NuGet version."
-            exit 1
-          fi
-
-          echo "package_version=$version" >> "$GITHUB_OUTPUT"
-          echo "Resolved package version: $version"
+        shell: pwsh
+        run: >
+          dotnet run --project ./scripts/JekyllNet.ReleaseTool/JekyllNet.ReleaseTool.csproj --
+          resolve-version
+          --project ./JekyllNet.Cli/JekyllNet.Cli.csproj
+          --github-ref-type '${{ github.ref_type }}'
+          --github-ref-name '${{ github.ref_name }}'
+          --input-version '${{ github.event.inputs.version }}'
+          --github-output $env:GITHUB_OUTPUT
 
       - name: Restore
         run: dotnet restore ./JekyllNet.slnx
